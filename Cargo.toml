@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libafl = { path = "./LibAFL/libafl", features = [] }
+libafl = "0.7.1"
 pcap = "0.9.2"
 serde = "1.0.137"
+
+[patch.crates-io]
+libafl = { git = "https://github.com/AFLplusplus/LibAFL" }
