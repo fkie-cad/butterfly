@@ -1,4 +1,5 @@
-<h1 align="center">
+<h1 align="center" style="border-bottom: none; margin-bottom: 0">
+    <br/>
     <!-- href to docs.rs/butterfly -->
     <img src="./logo.png" width="128" height="auto">
     <br/>
