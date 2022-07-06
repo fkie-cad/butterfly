@@ -23,14 +23,10 @@
 </div>
 
 ## Description
-This crate contains
-- Inputs that are vectors of packets
-- can be loaded from pcap files
-- mutations that mutate one packet individually
-- protocol-aware mutations
-    - packet insertion, deletion, reordering
-- state observation channel that builds a StateGraph
-  paire with feedback mechanism that detects new states or state transitions
+This crate brings stateful fuzzing capabilities to LibAFL via
+1. __Packet-based Inputs__: Inputs that are vectors of packets and can be loaded from pcap files
+2. __Packet-based Mutations__: Mutators that can be applied to selected packets only (havoc and protocol-aware mutations like packet insertion, deletion and reordering)
+3. __State-Graph Inference__: Observe which states your target goes through as it processes the individual packets and identify when it enters a new state or makes a new state transition
 
 ## Installation
 Dependencies:
@@ -38,4 +34,4 @@ Dependencies:
 - LibAFL certain version
 
 ## How to use
-see the docs
+see the docs or examples
