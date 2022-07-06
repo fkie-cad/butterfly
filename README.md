@@ -1,6 +1,6 @@
 <h1 align="center">
     <br/>
-    <img src="./logo.png" width="200" height="auto">
+    <img src="./logo.png" width="120" height="auto">
     <br/>
     butterfly
     <br/>
