@@ -6,9 +6,6 @@
     butterfly
     <br/>
 </h1>
-<p align="center">
-    LibAFL components for stateful fuzzing
-</p>
 <div align="center">
     <!--
     badges:
@@ -50,4 +47,38 @@ libafl = { git = "https://github.com/AFLplusplus/LibAFL" }
 ```
 
 ## How to use
-TODO: docs or examples
+Start with [the wiki]() and [the documentation]().    
+Also, [some examples]() may be helpful.
+
+<hr/>
+<div align="center">
+&#169; by Fraunhofer FKIE 2022
+</div>
+
+<!--
+WIKI
+====
+
+- A theoretical introduction
+    - note to skip to next part if not interested in theory
+    - a little bit from AFLNet paper / StateAFL paper
+- Components overview
+    - Input: HasPackets, HasPcapRepresentation, HasHavocMutations
+    - Mutators:
+        - (all mutators)
+        - Scheduler
+    - Observer:
+        - builds a StateGraph (example image FTP)
+        - `TargetState` type
+    - Feedback
+    - Monitor
+    - Executor
+        - responsible for recording state
+        - custom executor needed
+- How to create a fuzzer
+    - have compile-tests here
+    
+EXAMPLES
+========
+- AFLNet
+-->
