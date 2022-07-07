@@ -47,13 +47,9 @@ libafl = { git = "https://github.com/AFLplusplus/LibAFL" }
 ```
 
 ## How to use
-Start with [the wiki]() and [the documentation]().    
-Also, [some examples]() may be helpful.
+Start with [the wiki]() and [the documentation](). Also, [some examples]() may be helpful.
 
-<hr/>
-<div align="center">
-&#169; by Fraunhofer FKIE 2022
-</div>
+For questions, feature requests or bug reports please [create an issue](https://github.com/fkie-cad/butterfly/issues/new).
 
 <!--
 WIKI
