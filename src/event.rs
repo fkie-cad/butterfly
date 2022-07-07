@@ -1,6 +1,5 @@
-
 /// Key for user stats.
-/// 
+///
 /// [`StateFeedback`](crate::StateFeedback) writes the number of vertices in
 /// [`StateObservers`](crate::StateObserver) state-graph into the user stats
 /// of the monitor with this key.

@@ -1,22 +1,12 @@
+use crate::input::HasPackets;
 use libafl::{
+    bolts::{rands::Rand, tuples::Named, HasLen},
+    inputs::{HasBytesVec, Input},
+    mutators::{MutationResult, Mutator},
+    state::{HasMaxSize, HasRand},
     Error,
-    state::{HasRand, HasMaxSize},
-    mutators::{
-        Mutator,
-        MutationResult,
-    },
-    inputs::{
-        Input,
-        HasBytesVec,
-    },
-    bolts::{
-        rands::Rand,
-        HasLen,
-        tuples::Named,
-    },
 };
 use std::marker::PhantomData;
-use crate::input::HasPackets;
 
 /// Like libafls [`CrossoverInsertMutator`](libafl::mutators::mutations::CrossoverInsertMutator)
 /// but for a single packet.
@@ -52,37 +42,37 @@ where
         if input.len() <= 1 {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let max_size = state.max_size();
-        
+
         let packet = state.rand_mut().below(input.len() as u64) as usize;
         let packet_len = input.packets()[packet].len();
         let other = state.rand_mut().below(input.len() as u64) as usize;
         let other_len = input.packets()[other].len();
-        
+
         if packet == other || packet_len >= max_size || packet_len == 0 || other_len == 0 {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let from = state.rand_mut().below(other_len as u64) as usize;
         let to = state.rand_mut().below(packet_len as u64) as usize;
         let mut len = 1 + state.rand_mut().below((other_len - from) as u64) as usize;
-        
+
         // Don't exceed the maximum size of a packet
         if packet_len + len > max_size {
             len = max_size - packet_len;
         }
-        
+
         // Make room for `len` additional bytes
         input.packets_mut()[packet].bytes_mut().resize(packet_len + len, 0);
-        
+
         // Move bytes at `to`, `len` places to the right
         input.packets_mut()[packet].bytes_mut().copy_within(to..packet_len, to + len);
-        
+
         // Insert `len` bytes from `other` into `packet`
         let content = input.packets()[other].bytes()[from..from + len].to_vec();
         input.packets_mut()[packet].bytes_mut()[to..to + len].copy_from_slice(&content);
-        
+
         Ok(MutationResult::Mutated)
     }
 }
@@ -130,23 +120,23 @@ where
         if input.len() <= 1 {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let packet = state.rand_mut().below(input.len() as u64) as usize;
         let packet_len = input.packets()[packet].len();
         let other = state.rand_mut().below(input.len() as u64) as usize;
         let other_len = input.packets()[other].len();
-        
+
         if packet == other || packet_len == 0 || other_len == 0 {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let from = state.rand_mut().below(other_len as u64) as usize;
         let to = state.rand_mut().below(packet_len as u64) as usize;
         let len = state.rand_mut().below(std::cmp::min(other_len - from, packet_len - to) as u64) as usize;
-        
+
         let content = input.packets()[other].bytes()[from..from + len].to_vec();
         input.packets_mut()[packet].bytes_mut()[to..to + len].copy_from_slice(&content);
-        
+
         Ok(MutationResult::Mutated)
     }
 }

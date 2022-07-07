@@ -1,9 +1,9 @@
 use libafl::{
-    Error,
-    inputs::Input,
-    mutators::{MutatorsTuple, ComposedByMutations, ScheduledMutator, MutationResult, Mutator},
-    state::HasRand,
     bolts::rands::Rand,
+    inputs::Input,
+    mutators::{ComposedByMutations, MutationResult, Mutator, MutatorsTuple, ScheduledMutator},
+    state::HasRand,
+    Error,
 };
 use std::marker::PhantomData;
 
@@ -49,7 +49,7 @@ where
     fn mutations(&self) -> &MT {
         &self.mutations
     }
-    
+
     fn mutations_mut(&mut self) -> &mut MT {
         &mut self.mutations
     }
@@ -75,19 +75,19 @@ where
     fn iterations(&self, _state: &mut S, _input: &I) -> u64 {
         1
     }
-    
+
     fn schedule(&self, state: &mut S, _input: &I) -> usize {
         state.rand_mut().below(self.mutations.len() as u64) as usize
     }
-    
+
     fn scheduled_mutate(&mut self, state: &mut S, input: &mut I, stage_idx: i32) -> Result<MutationResult, Error> {
         let mut result = MutationResult::Skipped;
-        
+
         while result == MutationResult::Skipped {
             let mutation = self.schedule(state, input);
             result = self.mutations.get_and_mutate(mutation, state, input, stage_idx)?;
         }
-        
+
         Ok(result)
     }
 }

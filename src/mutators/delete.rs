@@ -1,19 +1,12 @@
+use crate::input::HasPackets;
 use libafl::{
-    Error,
-    state::{HasRand, HasMaxSize},
-    mutators::{
-        Mutator,
-        MutationResult,
-    },
+    bolts::{rands::Rand, tuples::Named, HasLen},
     inputs::Input,
-    bolts::{
-        rands::Rand,
-        HasLen,
-        tuples::Named,
-    },
+    mutators::{MutationResult, Mutator},
+    state::{HasMaxSize, HasRand},
+    Error,
 };
 use std::marker::PhantomData;
-use crate::input::HasPackets;
 
 /// A mutator that deletes a single, random packet.
 ///
@@ -49,10 +42,10 @@ where
         if input.len() <= self.min_packets {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let idx = state.rand_mut().below(input.len() as u64) as usize;
         input.packets_mut().remove(idx);
-        
+
         Ok(MutationResult::Mutated)
     }
 }

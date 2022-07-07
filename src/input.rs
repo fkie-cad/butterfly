@@ -1,10 +1,7 @@
-use libafl::{
-    Error,
-    Evaluator,
-};
+use libafl::{Error, Evaluator};
 use pcap::{Capture, Offline};
-use std::path::Path;
 use std::ffi::OsStr;
+use std::path::Path;
 
 /// Signifies that an input consists of packets.
 ///
@@ -13,14 +10,14 @@ use std::ffi::OsStr;
 /// then use [`BytesInput`](libafl::inputs::BytesInput) as `I`
 /// but packets can also hold some semantical or meta information
 /// as structs or enums.
-/// 
+///
 /// # Example
 /// The simplest type of input:
 /// ```
 /// struct PacketInput {
 ///     packets: Vec<BytesInput>,
 /// }
-/// 
+///
 /// impl HasPackets<BytesInput> for PacketInput {
 ///     fn packets(&self) -> &[BytesInput] {
 ///         &self.packets
@@ -56,7 +53,7 @@ use std::ffi::OsStr;
 pub trait HasPackets<I> {
     /// Get the inputs packets
     fn packets(&self) -> &[I];
-    
+
     /// Get the inputs packets
     fn packets_mut(&mut self) -> &mut Vec<I>;
 }
@@ -65,7 +62,7 @@ pub trait HasPackets<I> {
 pub trait HasPcapRepresentation<I> {
     /// Given a packet capture, parse the packets and construct an input
     fn from_pcap(capture: Capture<Offline>) -> Result<I, Error>;
-    
+
     //TODO: maybe to_pcap() ?
 }
 
@@ -73,7 +70,7 @@ pub trait HasPcapRepresentation<I> {
 ///
 /// It scans the directory for files ending with `.pcap` or `.pcapng` and loads them
 /// via [`HasPcapRepresentation::from_pcap()`](crate::HasPcapRepresentation::from_pcap).
-/// 
+///
 /// This is an equivalent to [`load_initial_inputs()`](libafl::state::StdState::load_initial_inputs) from LibAFL.
 ///
 /// # Arguments
@@ -82,7 +79,7 @@ pub trait HasPcapRepresentation<I> {
 /// - `executor`: libafls executor
 /// - `mgr`: libafls event manager
 /// - `in_dir`: path to directory with .pcap files
-pub fn load_pcaps<S, Z, E, EM, I>(state: &mut S, fuzzer: &mut Z, executor: &mut E, mgr: &mut EM, in_dir: &Path) -> Result<(), Error> 
+pub fn load_pcaps<S, Z, E, EM, I>(state: &mut S, fuzzer: &mut Z, executor: &mut E, mgr: &mut EM, in_dir: &Path) -> Result<(), Error>
 where
     Z: Evaluator<E, EM, I, S>,
     I: HasPcapRepresentation<I>,
@@ -90,15 +87,15 @@ where
     for entry in std::fs::read_dir(in_dir)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         let attributes = std::fs::metadata(&path);
-        
+
         if attributes.is_err() {
             continue;
         }
-        
+
         let attr = attributes?;
-        
+
         if attr.is_file() && attr.len() > 0 {
             if path.extension() == Some(OsStr::new("pcapng")) || path.extension() == Some(OsStr::new("pcap")) {
                 println!("[butterfly] Loading pcap {}...", path.display());
@@ -109,6 +106,6 @@ where
             load_pcaps(state, fuzzer, executor, mgr, &path)?;
         }
     }
-    
+
     Ok(())
 }

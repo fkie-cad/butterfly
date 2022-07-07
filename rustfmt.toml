@@ -1,0 +1,6 @@
+max_width = 1024
+use_small_heuristics = "Max"
+edition = "2021"
+match_block_trailing_comma = true
+use_field_init_shorthand = true
+struct_lit_width = 0

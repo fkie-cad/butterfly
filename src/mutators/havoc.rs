@@ -1,21 +1,13 @@
 use libafl::{
-    Error,
-    state::HasRand,
-    mutators::{
-        Mutator,
-        MutatorsTuple,
-        MutationResult,
-        mutations::*,
-    },
-    inputs::{
-        Input,
-        bytes::BytesInput,
-    },
     bolts::{
         rands::Rand,
+        tuples::{tuple_list, Named},
         HasLen,
-        tuples::{Named, tuple_list},
     },
+    inputs::{bytes::BytesInput, Input},
+    mutators::{mutations::*, MutationResult, Mutator, MutatorsTuple},
+    state::HasRand,
+    Error,
 };
 use std::marker::PhantomData;
 
@@ -24,34 +16,11 @@ use std::marker::PhantomData;
 /// There are also mutators that get two inputs like crossover mutators
 /// but these don't work with packet-based inputs so we replace them with
 /// our own mutators.
-pub type SupportedHavocMutationsType = (BitFlipMutator, (ByteFlipMutator, (ByteIncMutator, (ByteDecMutator, (ByteNegMutator, (ByteRandMutator, (ByteAddMutator, (WordAddMutator, (DwordAddMutator, (QwordAddMutator, (ByteInterestingMutator, (WordInterestingMutator, (DwordInterestingMutator, (BytesDeleteMutator, (BytesExpandMutator, (BytesInsertMutator, (BytesRandInsertMutator, (BytesSetMutator, (BytesRandSetMutator, (BytesCopyMutator, (BytesInsertCopyMutator, (BytesSwapMutator, () ))))))))))))))))))))));
+pub type SupportedHavocMutationsType = (BitFlipMutator, (ByteFlipMutator, (ByteIncMutator, (ByteDecMutator, (ByteNegMutator, (ByteRandMutator, (ByteAddMutator, (WordAddMutator, (DwordAddMutator, (QwordAddMutator, (ByteInterestingMutator, (WordInterestingMutator, (DwordInterestingMutator, (BytesDeleteMutator, (BytesExpandMutator, (BytesInsertMutator, (BytesRandInsertMutator, (BytesSetMutator, (BytesRandSetMutator, (BytesCopyMutator, (BytesInsertCopyMutator, (BytesSwapMutator, ()))))))))))))))))))))));
 
 /// Returns a tuple with all the mutations that can be used by a [`PacketHavocMutator`].
 pub fn supported_havoc_mutations() -> SupportedHavocMutationsType {
-    tuple_list!(
-        BitFlipMutator::new(),
-        ByteFlipMutator::new(),
-        ByteIncMutator::new(),
-        ByteDecMutator::new(),
-        ByteNegMutator::new(),
-        ByteRandMutator::new(),
-        ByteAddMutator::new(),
-        WordAddMutator::new(),
-        DwordAddMutator::new(),
-        QwordAddMutator::new(),
-        ByteInterestingMutator::new(),
-        WordInterestingMutator::new(),
-        DwordInterestingMutator::new(),
-        BytesDeleteMutator::new(),
-        BytesExpandMutator::new(),
-        BytesInsertMutator::new(),
-        BytesRandInsertMutator::new(),
-        BytesSetMutator::new(),
-        BytesRandSetMutator::new(),
-        BytesCopyMutator::new(),
-        BytesInsertCopyMutator::new(),
-        BytesSwapMutator::new()
-    )
+    tuple_list!(BitFlipMutator::new(), ByteFlipMutator::new(), ByteIncMutator::new(), ByteDecMutator::new(), ByteNegMutator::new(), ByteRandMutator::new(), ByteAddMutator::new(), WordAddMutator::new(), DwordAddMutator::new(), QwordAddMutator::new(), ByteInterestingMutator::new(), WordInterestingMutator::new(), DwordInterestingMutator::new(), BytesDeleteMutator::new(), BytesExpandMutator::new(), BytesInsertMutator::new(), BytesRandInsertMutator::new(), BytesSetMutator::new(), BytesRandSetMutator::new(), BytesCopyMutator::new(), BytesInsertCopyMutator::new(), BytesSwapMutator::new())
 }
 
 /// Signifies that an input can mutate its packets with havoc mutators.
@@ -102,7 +71,7 @@ where
 /// Not all of libafls mutators are supported though, see
 /// [`supported_havoc_mutations()`](crate::supported_havoc_mutations) for
 /// a list of all supported mutators.
-/// 
+///
 /// # Example
 /// ```
 /// let mutator = PacketHavocMutator::new(supported_havoc_mutations());
@@ -124,7 +93,7 @@ where
 {
     /// These mutation operators must exclusively be for BytesInputs
     mutations: MT,
-    phantom: PhantomData<(S,I)>
+    phantom: PhantomData<(S, I)>,
 }
 
 impl<I, MT, S> PacketHavocMutator<I, MT, S>
@@ -138,15 +107,15 @@ where
     pub fn new(mutations: MT) -> Self {
         Self {
             mutations,
-            phantom: PhantomData
+            phantom: PhantomData,
         }
     }
-    
+
     /// Get the number of stack mutations to apply
     fn iterations(&self, state: &mut S, _input: &I) -> u64 {
         state.rand_mut().below(16) as u64
     }
-    
+
     /// Get the next mutation to apply (index into mutation list)
     fn schedule(&self, state: &mut S, _input: &I) -> usize {
         state.rand_mut().below(self.mutations.len() as u64) as usize
@@ -163,27 +132,21 @@ where
         if input.len() == 0 {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let mut result = MutationResult::Skipped;
         let iters = self.iterations(state, input);
         let packet = state.rand_mut().below(input.len() as u64) as usize;
-        
+
         for _ in 0..iters {
             let mutation = self.schedule(state, input);
-            
-            let outcome = input.mutate_packet(
-                packet,
-                &mut self.mutations,
-                mutation,
-                state,
-                stage_idx
-            )?;
-            
+
+            let outcome = input.mutate_packet(packet, &mut self.mutations, mutation, state, stage_idx)?;
+
             if outcome == MutationResult::Mutated {
                 result = MutationResult::Mutated;
             }
         }
-        
+
         Ok(result)
     }
 }

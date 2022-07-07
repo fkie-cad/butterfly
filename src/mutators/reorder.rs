@@ -1,19 +1,12 @@
+use crate::input::HasPackets;
 use libafl::{
-    Error,
-    state::HasRand,
-    mutators::{
-        Mutator,
-        MutationResult,
-    },
+    bolts::{rands::Rand, tuples::Named, HasLen},
     inputs::Input,
-    bolts::{
-        rands::Rand,
-        HasLen,
-        tuples::Named,
-    },
+    mutators::{MutationResult, Mutator},
+    state::HasRand,
+    Error,
 };
 use std::marker::PhantomData;
-use crate::input::HasPackets;
 
 /// A mutator that swaps two random packets.
 pub struct PacketReorderMutator<P> {
@@ -38,16 +31,16 @@ where
         if input.len() <= 1 {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let from = state.rand_mut().below(input.len() as u64) as usize;
         let to = state.rand_mut().below(input.len() as u64) as usize;
-        
+
         if from == to {
             return Ok(MutationResult::Skipped);
         }
-        
+
         input.packets_mut().swap(from, to);
-        
+
         Ok(MutationResult::Mutated)
     }
 }

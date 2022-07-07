@@ -1,22 +1,12 @@
+use crate::input::HasPackets;
 use libafl::{
+    bolts::{rands::Rand, tuples::Named, HasLen},
+    inputs::{HasBytesVec, Input},
+    mutators::{MutationResult, Mutator},
+    state::{HasMaxSize, HasRand},
     Error,
-    state::{HasRand, HasMaxSize},
-    mutators::{
-        Mutator,
-        MutationResult,
-    },
-    inputs::{
-        Input,
-        HasBytesVec,
-    },
-    bolts::{
-        rands::Rand,
-        HasLen,
-        tuples::Named,
-    },
 };
 use std::marker::PhantomData;
-use crate::input::HasPackets;
 
 /// A mutator that splices two random packets together.
 ///
@@ -59,22 +49,22 @@ where
         if input.len() <= self.min_packets {
             return Ok(MutationResult::Skipped);
         }
-        
+
         let idx = state.rand_mut().below(input.len() as u64 - 1) as usize;
         let packet = input.packets_mut().remove(idx + 1);
-        
+
         let to = state.rand_mut().below(input.packets()[idx].len() as u64) as usize;
         let from = state.rand_mut().below(packet.len() as u64) as usize;
-        
+
         input.packets_mut()[idx].bytes_mut().resize(to + 1 + packet.len() - (from + 1), 0);
         input.packets_mut()[idx].bytes_mut()[to..].copy_from_slice(&packet.bytes()[from..]);
-        
+
         let bytes = input.packets_mut()[idx].bytes_mut();
-        
+
         if bytes.len() > state.max_size() {
             bytes.resize(state.max_size(), 0);
         }
-        
+
         Ok(MutationResult::Mutated)
     }
 }

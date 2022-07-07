@@ -1,15 +1,8 @@
-use libafl::{
-    Error,
-    bolts::{
-        tuples::Named,
-    },
-    observers::Observer,
-    executors::ExitKind,
-};
-use serde::{Serialize, Deserialize};
-use std::fmt::Debug;
+use libafl::{bolts::tuples::Named, executors::ExitKind, observers::Observer, Error};
+use serde::{Deserialize, Serialize};
 use std::cmp::Ord;
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Debug;
 
 #[inline]
 fn pack_transition(from: u32, to: u32) -> u64 {
@@ -44,25 +37,23 @@ where
             new_transitions: false,
         }
     }
-    
+
     fn reset(&mut self) {
         self.last_node = None;
-        self.new_transitions = false;    
+        self.new_transitions = false;
     }
-    
+
     fn add_node(&mut self, state: &PS) -> u32 {
         match self.nodes.get(state) {
-            Some(id) => {
-                *id
-            },
+            Some(id) => *id,
             None => {
                 let next_id = self.nodes.len() as u32;
-                assert!( self.nodes.insert(state.clone(), next_id).is_none() );
+                assert!(self.nodes.insert(state.clone(), next_id).is_none());
                 next_id
             },
         }
     }
-    
+
     fn add_edge(&mut self, id: u32) {
         self.new_transitions |= match self.last_node.take() {
             Some(old_id) => {
@@ -74,18 +65,18 @@ where
             },
             None => false,
         };
-        
+
         self.last_node = Some(id);
     }
-    
+
     fn print_dot(&self) {
         println!("digraph IMPLEMENTED_STATE_MACHINE {{");
-        
+
         for value in &self.edges {
             let (from, to) = unpack_transition(*value);
             println!("  \"{}\" -> \"{}\";", from, to);
         }
-        
+
         println!("}}");
     }
 }
@@ -125,25 +116,25 @@ where
             graph: StateGraph::<PS>::new(),
         }
     }
-    
+
     /// Tell the observer that the target has entered state `state`.
     pub fn record(&mut self, state: &PS) {
         let node = self.graph.add_node(state);
         self.graph.add_edge(node);
     }
-    
-    /// Returns whether any new edges were created in the state-graph during the last run. 
+
+    /// Returns whether any new edges were created in the state-graph during the last run.
     /// Used by [`StateFeedback`](crate::StateFeedback).
     pub fn had_new_transitions(&self) -> bool {
         self.graph.new_transitions
     }
-    
+
     /// Returns the number of vertices and edges in the state-graph.
     /// Used by [`StateFeedback`](crate::StateFeedback).
     pub fn info(&self) -> (usize, usize) {
         (self.graph.nodes.len(), self.graph.edges.len())
     }
-    
+
     /// Print a dot representation of the statemachine to stdout.
     pub fn print_statemachine(&self) {
         self.graph.print_dot();
@@ -167,7 +158,7 @@ where
         self.graph.reset();
         Ok(())
     }
-    
+
     fn post_exec(&mut self, _state: &mut S, _input: &I, _exit_kind: &ExitKind) -> Result<(), Error> {
         Ok(())
     }
