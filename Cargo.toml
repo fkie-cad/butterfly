@@ -8,6 +8,11 @@ readme = "README.md"
 repository = "https://github.com/fkie-cad/butterfly"
 license = "MIT"
 keywords = ["libafl", "fuzzing", "security"]
+include = [
+    "src/*",
+    "Cargo.toml",
+    "README.md",
+]
 
 [dependencies]
 libafl = "0.7.1"
