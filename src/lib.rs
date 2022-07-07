@@ -42,6 +42,7 @@
 //! ... can be found in our [repository](https://github.com/fkie-cad/butterfly) and [wiki](https://github.com/fkie-cad/butterfly/wiki).
 
 #![deny(missing_docs)]
+#![allow(clippy::new_without_default)]
 
 mod feedback;
 mod input;

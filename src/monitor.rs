@@ -22,11 +22,8 @@ pub trait HasStateStats: Monitor {
         let stats = self.client_stats_mut();
         
         for client_stat in stats.iter_mut() {
-            match client_stat.get_user_stats(stat) {
-                Some(UserStats::Number(val)) => {
-                    sum += val;
-                },
-                _ => {}
+            if let Some(UserStats::Number(val)) = client_stat.get_user_stats(stat) {
+                sum += val;
             }
         }
         
@@ -214,14 +211,14 @@ where
                 
                 // Write header
                 if !already_exists {
-                    let _ = write!(&mut file, "### butterfly::FuzzerStatsWrapper output ###\n");
-                    let _ = write!(&mut file, "# time, cores, corpus count, crashes, total execs, exec/s, nodes, edges\n");
+                    let _ = writeln!(&mut file, "### butterfly::FuzzerStatsWrapper output ###");
+                    let _ = writeln!(&mut file, "# time, cores, corpus count, crashes, total execs, exec/s, nodes, edges");
                 }
                 
                 // Write info
-                let _ = write!(
+                let _ = writeln!(
                     &mut file,
-                    "{}, {}, {}, {}, {}, {}, {}, {}\n",
+                    "{}, {}, {}, {}, {}, {}, {}, {}",
                     now.as_secs(),
                     cores,
                     corpus_size,
