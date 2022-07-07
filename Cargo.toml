@@ -2,6 +2,12 @@
 name = "butterfly"
 version = "0.1.0"
 edition = "2021"
+authors = ["Patrick D."]
+description = "LibAFL components for stateful fuzzing"
+readme = "README.md"
+repository = "https://github.com/fkie-cad/butterfly"
+license = "MIT"
+keywords = ["libafl", "fuzzing", "security"]
 
 [dependencies]
 libafl = "0.7.1"
