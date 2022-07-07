@@ -15,6 +15,16 @@ use libafl::{
 use std::marker::PhantomData;
 use crate::input::HasPackets;
 
+/// A mutator that deletes a single, random packet.
+///
+/// It respects a lower bound on the number of packets
+/// passed as an argument to the constructor.
+///
+/// # Example
+/// ```
+/// // Make sure that we always have at least 4 packets in an input
+/// let mutator = PacketDeleteMutator::new(4);
+/// ```
 pub struct PacketDeleteMutator<P> {
     phantom: PhantomData<P>,
     min_packets: usize,

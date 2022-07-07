@@ -15,6 +15,16 @@ use libafl::{
 use std::marker::PhantomData;
 use crate::input::HasPackets;
 
+/// A mutator that duplicates a single, random packet.
+///
+/// It respects an upper bound on the number of packets
+/// passed as an argument to the constructor.
+///
+/// # Example
+/// ```
+/// // Make sure that we never exceed 16 packets in an input
+/// let mutator = PacketDuplicateMutator::new(16);
+/// ```
 pub struct PacketDuplicateMutator<P>
 where
     P: Clone,

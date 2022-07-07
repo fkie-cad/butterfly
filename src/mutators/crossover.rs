@@ -18,6 +18,11 @@ use libafl::{
 use std::marker::PhantomData;
 use crate::input::HasPackets;
 
+/// Like libafls [`CrossoverInsertMutator`](libafl::mutators::mutations::CrossoverInsertMutator)
+/// but for a single packet.
+///
+/// `P` denotes the type of an individual packet that MUST implement [`HasBytesVec`](libafl::inputs::HasBytesVec).    
+/// If a packet cannot simply be represented as a bytearray then this mutator cannot be used.
 pub struct PacketCrossoverInsertMutator<P>
 where
     P: HasBytesVec + HasLen,
@@ -90,6 +95,11 @@ where
     }
 }
 
+/// Like libafls [`CrossoverReplaceMutator`](libafl::mutators::mutations::CrossoverReplaceMutator)
+/// but for a single packet.
+///
+/// `P` denotes the type of an individual packet that MUST implement [`HasBytesVec`](libafl::inputs::HasBytesVec).    
+/// If a packet cannot simply be represented as a bytearray then this mutator cannot be used.
 pub struct PacketCrossoverReplaceMutator<P>
 where
     P: HasBytesVec + HasLen,

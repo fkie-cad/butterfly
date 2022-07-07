@@ -15,6 +15,7 @@ use libafl::{
 use std::marker::PhantomData;
 use crate::input::HasPackets;
 
+/// A mutator that swaps two random packets.
 pub struct PacketReorderMutator<P> {
     phantom: PhantomData<P>,
 }

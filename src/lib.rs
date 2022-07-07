@@ -3,7 +3,7 @@
 //! # Overview
 //! butterfly offers
 //! 1. A new representation of inputs as sequences of packets
-//!    that can be loaded from a pcap files
+//!    that can be loaded from pcap files
 //! 2. Packet-aware mutators that mutate only one packet and leave
 //!    all others intact to reach deeper program states
 //! 3. Protocol-aware mutators that can reorder, duplicate, splice and delete packets
@@ -27,8 +27,8 @@
 //!     - [`PacketDeleteMutator`], [`PacketDuplicateMutator`], [`PacketReorderMutator`] work with all input types
 //!     - the rest only works with inputs whose packets implement [`HasBytesVec`](libafl::inputs::HasBytesVec)
 //! - **Observer**
-//!   - [`StateObserver`] builds a state-graph with states of a certain type `PS`
-//!   - The executor is responsible for calling [`StateObserver::record()`] with a state inferred from
+//!   - [`StateObserver`] builds a state-graph
+//!   - The executor is responsible for calling [`StateObserver::record()`] with state information inferred from
 //!     the fuzz target
 //! - **Feedback**
 //!   - [`StateFeedback`] determines if a [`StateObserver`] has seen new states in the last run
