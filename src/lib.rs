@@ -56,7 +56,9 @@ pub use event::{USER_STAT_EDGES, USER_STAT_NODES};
 pub use feedback::StateFeedback;
 pub use input::{load_pcaps, HasPackets, HasPcapRepresentation};
 pub use monitor::{FuzzerStatsWrapper, HasStateStats, StateMonitor};
-pub use mutators::{supported_havoc_mutations, HasHavocMutations, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator, PacketReorderMutator, PacketSpliceMutator, SupportedHavocMutationsType};
+pub use mutators::{
+    supported_havoc_mutations, HasHavocMutations, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator, PacketReorderMutator, PacketSpliceMutator, SupportedHavocMutationsType,
+};
 pub use observer::StateObserver;
 pub use scheduler::PacketMutationScheduler;
 
@@ -204,7 +206,15 @@ mod tests {
             let mut state = StdState::new(StdRand::with_seed(0), InMemoryCorpus::new(), InMemoryCorpus::new(), &mut feedback, &mut objective).unwrap();
             let scheduler = QueueScheduler::new();
             let mut fuzzer = StdFuzzer::new(scheduler, feedback, objective);
-            let mutator = PacketMutationScheduler::new(tuple_list!(PacketHavocMutator::new(supported_havoc_mutations()), PacketReorderMutator::new(), PacketSpliceMutator::new(4), PacketCrossoverInsertMutator::new(), PacketCrossoverReplaceMutator::new(), PacketDeleteMutator::new(4), PacketDuplicateMutator::new(16)));
+            let mutator = PacketMutationScheduler::new(tuple_list!(
+                PacketHavocMutator::new(supported_havoc_mutations()),
+                PacketReorderMutator::new(),
+                PacketSpliceMutator::new(4),
+                PacketCrossoverInsertMutator::new(),
+                PacketCrossoverReplaceMutator::new(),
+                PacketDeleteMutator::new(4),
+                PacketDuplicateMutator::new(16)
+            ));
             let mut stages = tuple_list!(StdMutationalStage::new(mutator));
             let mut executor = ExampleExecutor::new(tuple_list!(state_observer));
 
@@ -229,7 +239,15 @@ mod tests {
         let mut state = StdState::new(StdRand::with_seed(0), InMemoryCorpus::new(), InMemoryCorpus::new(), &mut feedback, &mut objective).unwrap();
         let scheduler = QueueScheduler::new();
         let mut fuzzer = StdFuzzer::new(scheduler, feedback, objective);
-        let mutator = PacketMutationScheduler::new(tuple_list!(PacketHavocMutator::new(supported_havoc_mutations()), PacketReorderMutator::new(), PacketSpliceMutator::new(4), PacketCrossoverInsertMutator::new(), PacketCrossoverReplaceMutator::new(), PacketDeleteMutator::new(4), PacketDuplicateMutator::new(16)));
+        let mutator = PacketMutationScheduler::new(tuple_list!(
+            PacketHavocMutator::new(supported_havoc_mutations()),
+            PacketReorderMutator::new(),
+            PacketSpliceMutator::new(4),
+            PacketCrossoverInsertMutator::new(),
+            PacketCrossoverReplaceMutator::new(),
+            PacketDeleteMutator::new(4),
+            PacketDuplicateMutator::new(16)
+        ));
         let mut stages = tuple_list!(StdMutationalStage::new(mutator));
         let mut executor = ExampleExecutor::new(tuple_list!(state_observer));
         fuzzer.fuzz_loop(&mut stages, &mut executor, &mut state, &mut mgr).unwrap();

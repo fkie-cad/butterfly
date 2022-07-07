@@ -93,7 +93,18 @@ impl Monitor for StateMonitor {
         let execs_per_sec = self.execs_per_sec();
         let cores = std::cmp::max(1, self.client_stats.len().saturating_sub(1));
 
-        println!("[butterfly::{}] uptime: {} | cores: {} | corpus: {} | objectives: {} | total execs: {} | exec/s: {} | nodes: {} | edges: {}", msg, format_duration_hms(&(current_time() - self.start_time)), cores, corpus_size, objective_size, execs, execs_per_sec, num_nodes, num_edges,);
+        println!(
+            "[butterfly::{}] uptime: {} | cores: {} | corpus: {} | objectives: {} | total execs: {} | exec/s: {} | nodes: {} | edges: {}",
+            msg,
+            format_duration_hms(&(current_time() - self.start_time)),
+            cores,
+            corpus_size,
+            objective_size,
+            execs,
+            execs_per_sec,
+            num_nodes,
+            num_edges,
+        );
     }
 }
 

@@ -16,11 +16,73 @@ use std::marker::PhantomData;
 /// There are also mutators that get two inputs like crossover mutators
 /// but these don't work with packet-based inputs so we replace them with
 /// our own mutators.
-pub type SupportedHavocMutationsType = (BitFlipMutator, (ByteFlipMutator, (ByteIncMutator, (ByteDecMutator, (ByteNegMutator, (ByteRandMutator, (ByteAddMutator, (WordAddMutator, (DwordAddMutator, (QwordAddMutator, (ByteInterestingMutator, (WordInterestingMutator, (DwordInterestingMutator, (BytesDeleteMutator, (BytesExpandMutator, (BytesInsertMutator, (BytesRandInsertMutator, (BytesSetMutator, (BytesRandSetMutator, (BytesCopyMutator, (BytesInsertCopyMutator, (BytesSwapMutator, ()))))))))))))))))))))));
+pub type SupportedHavocMutationsType = (
+    BitFlipMutator,
+    (
+        ByteFlipMutator,
+        (
+            ByteIncMutator,
+            (
+                ByteDecMutator,
+                (
+                    ByteNegMutator,
+                    (
+                        ByteRandMutator,
+                        (
+                            ByteAddMutator,
+                            (
+                                WordAddMutator,
+                                (
+                                    DwordAddMutator,
+                                    (
+                                        QwordAddMutator,
+                                        (
+                                            ByteInterestingMutator,
+                                            (
+                                                WordInterestingMutator,
+                                                (
+                                                    DwordInterestingMutator,
+                                                    (BytesDeleteMutator, (BytesExpandMutator, (BytesInsertMutator, (BytesRandInsertMutator, (BytesSetMutator, (BytesRandSetMutator, (BytesCopyMutator, (BytesInsertCopyMutator, (BytesSwapMutator, ()))))))))),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    ),
+);
 
 /// Returns a tuple with all the mutations that can be used by a [`PacketHavocMutator`].
 pub fn supported_havoc_mutations() -> SupportedHavocMutationsType {
-    tuple_list!(BitFlipMutator::new(), ByteFlipMutator::new(), ByteIncMutator::new(), ByteDecMutator::new(), ByteNegMutator::new(), ByteRandMutator::new(), ByteAddMutator::new(), WordAddMutator::new(), DwordAddMutator::new(), QwordAddMutator::new(), ByteInterestingMutator::new(), WordInterestingMutator::new(), DwordInterestingMutator::new(), BytesDeleteMutator::new(), BytesExpandMutator::new(), BytesInsertMutator::new(), BytesRandInsertMutator::new(), BytesSetMutator::new(), BytesRandSetMutator::new(), BytesCopyMutator::new(), BytesInsertCopyMutator::new(), BytesSwapMutator::new())
+    tuple_list!(
+        BitFlipMutator::new(),
+        ByteFlipMutator::new(),
+        ByteIncMutator::new(),
+        ByteDecMutator::new(),
+        ByteNegMutator::new(),
+        ByteRandMutator::new(),
+        ByteAddMutator::new(),
+        WordAddMutator::new(),
+        DwordAddMutator::new(),
+        QwordAddMutator::new(),
+        ByteInterestingMutator::new(),
+        WordInterestingMutator::new(),
+        DwordInterestingMutator::new(),
+        BytesDeleteMutator::new(),
+        BytesExpandMutator::new(),
+        BytesInsertMutator::new(),
+        BytesRandInsertMutator::new(),
+        BytesSetMutator::new(),
+        BytesRandSetMutator::new(),
+        BytesCopyMutator::new(),
+        BytesInsertCopyMutator::new(),
+        BytesSwapMutator::new()
+    )
 }
 
 /// Signifies that an input can mutate its packets with havoc mutators.
