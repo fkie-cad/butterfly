@@ -1,3 +1,46 @@
+//! butterfly provides LibAFL components for stateful fuzzing
+//!
+//! # Overview
+//! butterfly offers
+//! 1. A new representation of inputs as sequences of packets
+//!    that can be loaded from a pcap files
+//! 2. Packet-aware mutators that mutate only one packet and leave
+//!    all others intact to reach deeper program states
+//! 3. Protocol-aware mutators that can reorder, duplicate, splice and delete packets
+//!    in addition to "normal" havoc mutations 
+//! 4. An observer that tracks which states the target goes through as it processes the packets.    
+//!    This is used to build a state-graph of the target and identify
+//!    when new states have been reached.
+//!
+//! # Components
+//! - **Input**   
+//!   - In order to create a new, working input type you MUST implement the following traits:       
+//!   [`Hash`](core::hash::Hash), [`Debug`](core::fmt::Debug), [`Clone`](core::clone::Clone), [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize), [`Input`](libafl::inputs::Input)     
+//!   - To make it usable by other butterfly components, implement [`HasPackets`], [`HasLen`](libafl::bolts::HasLen)
+//!   - If you want to use havoc mutations, implement [`HasHavocMutations`]
+//!   - If you want to load it from a PCAP file, implement [`HasPcapRepresentation`]
+//! - **Mutators**
+//!   - havoc: [`PacketHavocMutator`] gets a list of havoc mutators and uses [`HasHavocMutations`] to mutate a selected packet.      
+//!     Not all of libafls havoc mutators work with packet-based inputs, though. [`supported_havoc_mutations`] gives you all havoc
+//!     mutators that work
+//!   - packet-mutators:
+//!     - [`PacketDeleteMutator`], [`PacketDuplicateMutator`], [`PacketReorderMutator`] work with all input types
+//!     - the rest only works with inputs whose packets implement [`HasBytesVec`](libafl::inputs::HasBytesVec)
+//! - **Observer**
+//!   - [`StateObserver`] builds a state-graph with states of a certain type `PS`
+//!   - The executor is responsible for calling [`StateObserver::record()`] with a state inferred from
+//!     the fuzz target
+//! - **Feedback**
+//!   - [`StateFeedback`] determines if a [`StateObserver`] has seen new states in the last run
+//! - **Monitor**
+//!   - butterfly provides a [`StateMonitor`] that prints information about the state-graph in addition to
+//!     all the other info
+//!   - if you want to use a different monitor but still want to get state-graph information you can
+//!     implement [`HasStateStats`]
+//! 
+//! # Tutorials, examples and more...
+//! ... can be found in our [repository](https://github.com/fkie-cad/butterfly) and [wiki](https://github.com/fkie-cad/butterfly/wiki).
+
 mod feedback;
 mod input;
 mod monitor;
