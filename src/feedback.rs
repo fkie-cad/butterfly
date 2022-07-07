@@ -18,6 +18,7 @@ use crate::{
     event::{USER_STAT_NODES, USER_STAT_EDGES},
 };
 
+/// Determines that an input is interesting if it led to new states or transitions in the previous run.
 #[derive(Debug)]
 pub struct StateFeedback<PS>
 where   

@@ -7,7 +7,16 @@ use std::path::PathBuf;
 use std::io::Write;
 use crate::event::{USER_STAT_NODES, USER_STAT_EDGES};
 
+/// Adds capabilities to a Monitor to get information about the state-graph.
+///
+/// All functions are already provided.   
+/// You just need to do
+/// ```
+/// impl HasStateStats for YourMonitor {}
+/// ```
+/// and then you can invoke the given functions in `YourMonitor::display()`.
 pub trait HasStateStats: Monitor {
+    /// Helper function used by the other functions.
     fn calculate_average(&mut self, stat: &str) -> u64 {
         let mut sum = 0;
         let stats = self.client_stats_mut();
@@ -24,15 +33,20 @@ pub trait HasStateStats: Monitor {
         sum / stats.len() as u64
     }
     
+    /// Get the average number of vertices in the state-graphs across all instances.
     fn avg_statemachine_nodes(&mut self) -> u64 {
         self.calculate_average(USER_STAT_NODES)
     }
     
+    /// Get the average number of edges in the state-graphs across all instances.
     fn avg_statemachine_edges(&mut self) -> u64 {
         self.calculate_average(USER_STAT_EDGES)
     }
 }
 
+/// A monitor that prints information about the state-graph in addition to all other info.
+///
+/// Works as a drop-in replacement for all other monitors.
 #[derive(Clone, Debug)]
 pub struct StateMonitor {
     client_stats: Vec<ClientStats>,
@@ -96,6 +110,21 @@ impl Monitor for StateMonitor {
     }
 }
 
+/// A monitor that wraps another monitor and writes information
+/// about the fuzzing campaign into a specified file.
+///
+/// The information includes most of the things printed on screen plus
+/// state-graph info from [`HasStateStats`](crate::HasStateStats):
+/// - time in seconds
+/// - number of clients running
+/// - corpus size
+/// - objective size
+/// - total executions
+/// - executions per second
+/// - number of vertices in state-graph
+/// - number of edges in state-graph
+///
+/// The file format is CSV.
 #[derive(Clone, Debug)]
 pub struct FuzzerStatsWrapper<M>
 where
@@ -111,6 +140,12 @@ impl<M> FuzzerStatsWrapper<M>
 where
     M: Monitor + HasStateStats,
 {
+    /// Create a FuzzerStatsWrapper from a given monitor.
+    ///
+    /// # Arguments
+    /// - `monitor`: monitor to wrap
+    /// - `filename`: path to the logfile where information is written to
+    /// - `interval`: Number of seconds to wait between writes (e.g. 30 to write every 30 seconds)
     pub fn new(monitor: M, filename: &str, interval: u64) -> Self {
         Self {
             base: monitor,
