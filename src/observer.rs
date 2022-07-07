@@ -90,6 +90,20 @@ where
     }
 }
 
+/// An observer that builds a state-graph.
+///
+/// The states that this observer stores must implement
+/// the following traits: [`Ord`](core::cmp::Ord), [`Debug`](core::fmt::Debug), [`Clone`](core::clone::Clone), [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize).
+/// Most commonly used state types are u64 or [u8; N].
+///
+/// When you create a StateObserver always specify `PS` manually:
+/// ```
+/// type State = u64;
+/// let observer = StateObserver::<State>::new("state observer");
+/// ```
+///
+/// The executor is responsible for calling [`StateObserver::record()`](crate::StateObserver::record)
+/// with states inferred from the fuzz target.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(bound = "PS: serde::Serialize + for<'a> serde::Deserialize<'a>")]
 pub struct StateObserver<PS>
@@ -104,6 +118,7 @@ impl<PS> StateObserver<PS>
 where
     PS: Clone + Debug + Ord + Serialize + for<'a> Deserialize<'a>,
 {
+    /// Create a new StateObserver with a given name.
     pub fn new(name: &str) -> Self {
         Self {
             name: name.to_string(),
@@ -111,19 +126,25 @@ where
         }
     }
     
+    /// Tell the observer that the target has entered state `state`.
     pub fn record(&mut self, state: &PS) {
         let node = self.graph.add_node(state);
         self.graph.add_edge(node);
     }
     
+    /// Returns whether any new edges were created in the state-graph during the last run. 
+    /// Used by [`StateFeedback`](crate::StateFeedback).
     pub fn had_new_transitions(&self) -> bool {
         self.graph.new_transitions
     }
     
+    /// Returns the number of vertices and edges in the state-graph.
+    /// Used by [`StateFeedback`](crate::StateFeedback).
     pub fn info(&self) -> (usize, usize) {
         (self.graph.nodes.len(), self.graph.edges.len())
     }
     
+    /// Print a dot representation of the statemachine to stdout.
     pub fn print_statemachine(&self) {
         self.graph.print_dot();
     }

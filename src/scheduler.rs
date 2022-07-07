@@ -7,6 +7,12 @@ use libafl::{
 };
 use std::marker::PhantomData;
 
+/// A mutation scheduler for butterflys mutators.
+///
+/// It schedules them in such a way that only one mutator in the list
+/// gets executed per run because the mutators may implement their own scheduling,
+/// like the [`PacketHavocMutator`](crate::PacketHavocMutator), which stacks
+/// havoc mutations on its own.
 pub struct PacketMutationScheduler<I, MT, S>
 where
     I: Input,
@@ -23,6 +29,9 @@ where
     MT: MutatorsTuple<I, S>,
     S: HasRand,
 {
+    /// Create a new PacketMutationScheduler with a list of mutators.
+    /// These mutators _should_ be from butterfly.   
+    /// It is not guaranteed that external mutators will work too.
     pub fn new(mutations: MT) -> Self {
         Self {
             mutations,
