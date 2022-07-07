@@ -37,6 +37,7 @@ impl<P> PacketDuplicateMutator<P>
 where
     P: Clone,
 {
+    /// Create a new PacketDuplicateMutator with an upper bound on the number of packets
     pub fn new(max_packets: usize) -> Self {
         Self {
             max_packets,

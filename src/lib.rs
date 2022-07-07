@@ -41,6 +41,8 @@
 //! # Tutorials, examples and more...
 //! ... can be found in our [repository](https://github.com/fkie-cad/butterfly) and [wiki](https://github.com/fkie-cad/butterfly/wiki).
 
+#![deny(missing_docs)]
+
 mod feedback;
 mod input;
 mod monitor;

@@ -133,6 +133,8 @@ where
     MT: MutatorsTuple<BytesInput, S>,
     S: HasRand,
 {
+    /// Create a new PacketHavocMutator with mutators that can be
+    /// applied to [`BytesInputs`](libafl::inputs::BytesInput).
     pub fn new(mutations: MT) -> Self {
         Self {
             mutations,

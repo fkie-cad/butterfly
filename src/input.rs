@@ -54,8 +54,10 @@ use std::ffi::OsStr;
 /// }
 /// ```
 pub trait HasPackets<I> {
+    /// Get the inputs packets
     fn packets(&self) -> &[I];
     
+    /// Get the inputs packets
     fn packets_mut(&mut self) -> &mut Vec<I>;
 }
 

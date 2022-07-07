@@ -32,6 +32,7 @@ impl<PS> StateFeedback<PS>
 where   
     PS: Debug + Clone + Ord + Serialize + for<'a> Deserialize<'a>,
 {
+    /// Create a new StateFeedback from a StateObserver
     pub fn new(observer: &StateObserver<PS>) -> Self {
         Self {
             observer_name: observer.name().to_string(),

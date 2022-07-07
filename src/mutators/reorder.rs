@@ -21,6 +21,7 @@ pub struct PacketReorderMutator<P> {
 }
 
 impl<P> PacketReorderMutator<P> {
+    /// Create a new PacketReorderMutator
     pub fn new() -> Self {
         Self {
             phantom: PhantomData,

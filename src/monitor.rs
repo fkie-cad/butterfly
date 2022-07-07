@@ -53,6 +53,7 @@ pub struct StateMonitor {
     start_time: Duration,
 }
 impl StateMonitor {
+    /// Create a new StateMonitor
     pub fn new() -> Self {
         Self {
             client_stats: Vec::<ClientStats>::new(),

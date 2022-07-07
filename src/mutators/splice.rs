@@ -40,6 +40,7 @@ impl<P> PacketSpliceMutator<P>
 where
     P: HasBytesVec + HasLen,
 {
+    /// Create a new PacketSpliceMutator with a lower bound for the number of packets
     pub fn new(min_packets: usize) -> Self {
         Self {
             phantom: PhantomData,

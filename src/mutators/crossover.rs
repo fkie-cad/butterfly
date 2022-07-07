@@ -34,6 +34,7 @@ impl<P> PacketCrossoverInsertMutator<P>
 where
     P: HasBytesVec + HasLen,
 {
+    /// Create a new PacketCrossoverInsertMutator
     pub fn new() -> Self {
         Self {
             phantom: PhantomData,
@@ -111,6 +112,7 @@ impl<P> PacketCrossoverReplaceMutator<P>
 where
     P: HasBytesVec + HasLen,
 {
+    /// Create a new PacketCrossoverReplaceMutator
     pub fn new() -> Self {
         Self {
             phantom: PhantomData,

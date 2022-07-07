@@ -31,6 +31,7 @@ pub struct PacketDeleteMutator<P> {
 }
 
 impl<P> PacketDeleteMutator<P> {
+    /// Create a new PacketDeleteMutator with a lower bound on the number of packets
     pub fn new(min_packets: usize) -> Self {
         Self {
             phantom: PhantomData,
