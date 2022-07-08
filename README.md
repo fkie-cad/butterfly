@@ -7,17 +7,21 @@
     <br/>
 </h1>
 <div align="center">
-    <!--
+    LibAFL components for stateful fuzzing
+</div>
+<!--
+<div align="center">
     badges:
         shields.io
             crates.io version
             docs.rs quick link
             crates.io license
-    -->
+    
     <a href="TODO" target="_blank">
         <img src="https://img.shields.io/static/v1?label=docs&message=online&color=success">
     </a>
 </div>
+-->
 
 ## Description
 This crate brings stateful fuzzing capabilities to LibAFL via
@@ -34,7 +38,7 @@ rustup toolchain install nightly
 and in your `Cargo.toml` insert
 ```toml
 [dependencies]
-butterfly = "*"
+butterfly = { git = "https://github.com/fkie-cad/butterfly" }
 ```
 
 __Warning about LibAFL version:__      
@@ -47,7 +51,11 @@ libafl = { git = "https://github.com/AFLplusplus/LibAFL" }
 ```
 
 ## How to use
-Start with [the wiki]() and [the documentation](). Also, [some examples]() may be helpful.
+Start with [the wiki](https://github.com/fkie-cad/butterfly/wiki). Documentation can be accessed with
+```sh
+cargo doc --open
+```
+Also, [some examples](./examples) may be helpful.
 
 For questions, feature requests or bug reports please [create an issue](https://github.com/fkie-cad/butterfly/issues/new).
 
