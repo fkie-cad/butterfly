@@ -1,27 +1,21 @@
 <h1 align="center">
     <br/>
-    <!-- href to crates.io/butterfly -->
-    <img src="./logo.png" width="128" height="auto">
+    <a href="https://crates.io/crates/butterfly-fuzz">
+        <img src="./logo.png" width="128" height="auto">
+    </a>
     <br/>
     butterfly
     <br/>
 </h1>
 <div align="center">
-    LibAFL components for stateful fuzzing
-</div>
-<!--
-<div align="center">
-    badges:
-        shields.io
-            crates.io version
-            docs.rs quick link
-            crates.io license
-    
-    <a href="TODO" target="_blank">
+    <a href="https://crates.io/crates/butterfly-fuzz">
+        <img src="https://img.shields.io/crates/v/butterfly-fuzz?color=success">
+    </a>&nbsp;
+    <a href="https://docs.rs/butterfly-fuzz">
         <img src="https://img.shields.io/static/v1?label=docs&message=online&color=success">
-    </a>
+    </a>&nbsp;
+    <img src="https://img.shields.io/crates/l/butterfly-fuzz">
 </div>
--->
 
 ## Description
 This crate brings stateful fuzzing capabilities to LibAFL via
@@ -38,23 +32,11 @@ rustup toolchain install nightly
 and in your `Cargo.toml` insert
 ```toml
 [dependencies]
-butterfly = { git = "https://github.com/fkie-cad/butterfly" }
-```
-
-__Warning about LibAFL version:__      
-Unfortunately the version of LibAFL on crates.io is fairly old (0.7.1 at the time of writing this) so we use the [github version](https://github.com/AFLplusplus/LibAFL) with more features and bug fixes. This means
-that you have to use the github version in your application too.     
-Add the following patch note to your `Cargo.toml` file:
-```toml
-[patch.crates-io]
-libafl = { git = "https://github.com/AFLplusplus/LibAFL" }
+butterfly = { version = "0.1.0", package = "butterfly-fuzz" }
 ```
 
 ## How to use
-Start with [the wiki](https://github.com/fkie-cad/butterfly/wiki). Documentation can be accessed with
-```sh
-cargo doc --open
-```
+Start with [the wiki](https://github.com/fkie-cad/butterfly/wiki) and [the docs](https://docs.rs/butterfly-fuzz).
 Also, [some examples](./examples) may be helpful.
 
 For questions, feature requests or bug reports please [create an issue](https://github.com/fkie-cad/butterfly/issues/new).
@@ -81,6 +63,12 @@ WIKI
         - custom executor needed
 - How to create a fuzzer
     - have compile-tests here
+    - create a new input type
+        - all traits...
+    - how to observe state in the executor (which type)
+        - create StateObserver
+        - create StateFeedback
+    - mutations
     
 EXAMPLES
 ========

@@ -1,5 +1,5 @@
 [package]
-name = "butterfly"
+name = "butterfly-fuzz"
 version = "0.1.0"
 edition = "2021"
 authors = ["Patrick D."]
@@ -7,7 +7,7 @@ description = "LibAFL components for stateful fuzzing"
 readme = "README.md"
 repository = "https://github.com/fkie-cad/butterfly"
 license = "MIT"
-keywords = ["libafl", "fuzzing", "security"]
+keywords = ["libafl", "fuzzing", "security", "stateful"]
 include = [
     "src/*",
     "Cargo.toml",
@@ -15,9 +15,9 @@ include = [
 ]
 
 [dependencies]
-libafl = "0.7.1"
-pcap = "0.9.2"
-serde = "1.0.137"
+libafl = "0.8"
+pcap = "0.9"
+serde = "1.0"
 
-[patch.crates-io]
-libafl = { git = "https://github.com/AFLplusplus/LibAFL" }
+[package.metadata.docs.rs]
+all-features = true
