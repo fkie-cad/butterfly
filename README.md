@@ -14,7 +14,9 @@
     <a href="https://docs.rs/butterfly-fuzz">
         <img src="https://img.shields.io/static/v1?label=docs&message=online&color=success">
     </a>&nbsp;
-    <img src="https://img.shields.io/crates/l/butterfly-fuzz">
+    <a href="LICENSE">
+        <img src="https://img.shields.io/crates/l/butterfly-fuzz">
+    </a>
 </div>
 
 ## Description
