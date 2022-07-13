@@ -1,6 +1,6 @@
 [package]
 name = "butterfly-fuzz"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Patrick D."]
 description = "LibAFL components for stateful fuzzing"
@@ -16,8 +16,12 @@ include = [
 
 [dependencies]
 libafl = "0.8"
-pcap = "0.9"
+pcap = { version = "0.9", features = [] }
 serde = "1.0"
 
+[features]
+default = []
+docs-rs = ["pcap/docs-rs"]
+
 [package.metadata.docs.rs]
-all-features = true
+features = ["docs-rs"]
