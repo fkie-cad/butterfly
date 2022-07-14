@@ -1,0 +1,4 @@
+[submodule "examples/minimal_ftp_fuzzer/LightFTP"]
+	path = examples/minimal_ftp_fuzzer/LightFTP
+	url = https://github.com/hfiref0x/LightFTP
+	ignore = dirty
