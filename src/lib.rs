@@ -58,7 +58,8 @@ pub use feedback::StateFeedback;
 pub use input::{load_pcaps, HasPackets, HasPcapRepresentation};
 pub use monitor::{FuzzerStatsWrapper, HasStateStats, StateMonitor};
 pub use mutators::{
-    supported_havoc_mutations, HasHavocMutations, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator, PacketReorderMutator, PacketSpliceMutator, SupportedHavocMutationsType,
+    supported_havoc_mutations, HasCrossoverInsertMutation, HasHavocMutations, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator, PacketReorderMutator, PacketSpliceMutator,
+    SupportedHavocMutationsType,
 };
 pub use observer::StateObserver;
 pub use scheduler::PacketMutationScheduler;
@@ -87,7 +88,7 @@ mod tests {
         observers::ObserversTuple,
         schedulers::queue::QueueScheduler,
         stages::StdMutationalStage,
-        state::{HasRand, StdState},
+        state::{HasMaxSize, HasRand, StdState},
         Error, Fuzzer, StdFuzzer,
     };
     use pcap::{Capture, Offline};
@@ -96,8 +97,32 @@ mod tests {
     use std::marker::PhantomData;
 
     #[derive(Hash, Debug, Clone, Serialize, Deserialize)]
+    enum PacketType {
+        A(BytesInput),
+        B(BytesInput),
+    }
+
+    impl<S> HasCrossoverInsertMutation<S> for PacketType
+    where
+        S: HasRand + HasMaxSize,
+    {
+        fn mutate_crossover_insert(&mut self, state: &mut S, other: &Self, stage_idx: i32) -> Result<MutationResult, Error> {
+            match self {
+                PacketType::A(data) => match other {
+                    PacketType::A(other_data) => data.mutate_crossover_insert(state, other_data, stage_idx),
+                    PacketType::B(_) => Ok(MutationResult::Skipped),
+                },
+                PacketType::B(data) => match other {
+                    PacketType::A(_) => Ok(MutationResult::Skipped),
+                    PacketType::B(other_data) => data.mutate_crossover_insert(state, other_data, stage_idx),
+                },
+            }
+        }
+    }
+
+    #[derive(Hash, Debug, Clone, Serialize, Deserialize)]
     struct PacketInput {
-        packets: Vec<BytesInput>,
+        packets: Vec<PacketType>,
     }
     impl<MT, S> HasHavocMutations<MT, S> for PacketInput
     where
@@ -105,7 +130,9 @@ mod tests {
         S: HasRand,
     {
         fn mutate_packet(&mut self, packet: usize, mutations: &mut MT, mutation: usize, state: &mut S, stage_idx: i32) -> Result<MutationResult, Error> {
-            mutations.get_and_mutate(mutation, state, &mut self.packets[packet], stage_idx)
+            match &mut self.packets[packet] {
+                PacketType::A(data) | PacketType::B(data) => mutations.get_and_mutate(mutation, state, data, stage_idx),
+            }
         }
     }
     impl Input for PacketInput {
@@ -113,12 +140,12 @@ mod tests {
             todo!();
         }
     }
-    impl HasPackets<BytesInput> for PacketInput {
-        fn packets(&self) -> &[BytesInput] {
+    impl HasPackets<PacketType> for PacketInput {
+        fn packets(&self) -> &[PacketType] {
             &self.packets
         }
 
-        fn packets_mut(&mut self) -> &mut Vec<BytesInput> {
+        fn packets_mut(&mut self) -> &mut Vec<PacketType> {
             &mut self.packets
         }
     }
@@ -210,9 +237,9 @@ mod tests {
             let mutator = PacketMutationScheduler::new(tuple_list!(
                 PacketHavocMutator::new(supported_havoc_mutations()),
                 PacketReorderMutator::new(),
-                PacketSpliceMutator::new(4),
+                //PacketSpliceMutator::new(4),
                 PacketCrossoverInsertMutator::new(),
-                PacketCrossoverReplaceMutator::new(),
+                //PacketCrossoverReplaceMutator::new(),
                 PacketDeleteMutator::new(4),
                 PacketDuplicateMutator::new(16)
             ));
@@ -243,9 +270,9 @@ mod tests {
         let mutator = PacketMutationScheduler::new(tuple_list!(
             PacketHavocMutator::new(supported_havoc_mutations()),
             PacketReorderMutator::new(),
-            PacketSpliceMutator::new(4),
+            //PacketSpliceMutator::new(4),
             PacketCrossoverInsertMutator::new(),
-            PacketCrossoverReplaceMutator::new(),
+            //PacketCrossoverReplaceMutator::new(),
             PacketDeleteMutator::new(4),
             PacketDuplicateMutator::new(16)
         ));
