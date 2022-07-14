@@ -3,7 +3,7 @@
 This example demonstrates how to setup a blackbox FTP fuzzer
 with butterfly.    
 A detailed walkthrough that explains every part of the harness
-can be found in [the wiki](TODO: Path to page).
+can be found in [the wiki](https://github.com/fkie-cad/butterfly/wiki/First-steps:-Creating-a-minimal-FTP-fuzzer).
 
 ## Building
 ```
