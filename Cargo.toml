@@ -25,3 +25,6 @@ docs-rs = ["pcap/docs-rs"]
 
 [package.metadata.docs.rs]
 features = ["docs-rs"]
+
+[lib]
+doctest = false
