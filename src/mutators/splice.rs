@@ -216,7 +216,7 @@ mod tests {
         let b = BytesInput::new(b"B".to_vec());
 
         for _ in 0..100 {
-            assert_eq!(a.mutate_splice(&mut state, &b, 0).unwrap(), MutationResult::Mutated,);
+            assert_eq!(a.mutate_splice(&mut state, &b, 0).unwrap(), MutationResult::Mutated);
             assert_eq!(a.bytes(), b"B");
         }
     }
@@ -228,7 +228,7 @@ mod tests {
         let b = BytesInput::new(b"asdasd fasd fa sdf asdf asdfasfd asdfsadf asdfsadf asdfsa df ".to_vec());
 
         for _ in 0..100 {
-            assert_eq!(a.mutate_splice(&mut state, &b, 0).unwrap(), MutationResult::Mutated,);
+            assert_eq!(a.mutate_splice(&mut state, &b, 0).unwrap(), MutationResult::Mutated);
         }
     }
 }

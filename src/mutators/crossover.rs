@@ -213,7 +213,7 @@ where
 
         let from = state.rand_mut().below(other_len as u64) as usize;
         let to = state.rand_mut().below(self_len as u64) as usize;
-        let len = state.rand_mut().below(std::cmp::min(other_len - from, self_len - to) as u64) as usize;
+        let len = 1 + state.rand_mut().below(std::cmp::min(other_len - from, self_len - to) as u64) as usize;
 
         self.bytes_mut()[to..to + len].copy_from_slice(&other.bytes()[from..from + len]);
 
@@ -276,5 +276,117 @@ where
 {
     fn name(&self) -> &str {
         "PacketCrossoverReplaceMutator"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use libafl::{
+        bolts::rands::StdRand,
+        inputs::BytesInput,
+        mutators::MutationResult,
+        state::{HasMaxSize, HasRand},
+    };
+
+    struct TestState {
+        rand: StdRand,
+        max_size: usize,
+    }
+    impl TestState {
+        fn new() -> Self {
+            Self {
+                rand: StdRand::with_seed(0),
+                max_size: 0,
+            }
+        }
+    }
+    impl HasRand for TestState {
+        type Rand = StdRand;
+
+        fn rand(&self) -> &StdRand {
+            &self.rand
+        }
+
+        fn rand_mut(&mut self) -> &mut StdRand {
+            &mut self.rand
+        }
+    }
+    impl HasMaxSize for TestState {
+        fn max_size(&self) -> usize {
+            self.max_size
+        }
+
+        fn set_max_size(&mut self, max_size: usize) {
+            self.max_size = max_size;
+        }
+    }
+
+    #[test]
+    fn test_insert_empty() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(Vec::new());
+        let b = BytesInput::new(Vec::new());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_crossover_insert(&mut state, &b, 0).unwrap(), MutationResult::Skipped);
+        }
+    }
+
+    #[test]
+    fn test_insert_len1() {
+        let mut state = TestState::new();
+        let b = BytesInput::new(b"B".to_vec());
+
+        for _ in 0..100 {
+            let mut a = BytesInput::new(b"A".to_vec());
+            assert_eq!(a.mutate_crossover_insert(&mut state, &b, 0).unwrap(), MutationResult::Mutated);
+            assert!(a.bytes() == b"AB" || a.bytes() == b"BA");
+        }
+    }
+
+    #[test]
+    fn test_insert_resize() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(b"A".to_vec());
+        let b = BytesInput::new(b"asdasd fasd fa sdf asdf asdfasfd asdfsadf asdfsadf asdfsa df ".to_vec());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_crossover_insert(&mut state, &b, 0).unwrap(), MutationResult::Mutated);
+        }
+    }
+
+    #[test]
+    fn test_replace_empty() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(Vec::new());
+        let b = BytesInput::new(Vec::new());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_crossover_replace(&mut state, &b, 0).unwrap(), MutationResult::Skipped);
+        }
+    }
+
+    #[test]
+    fn test_replace_len1() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(b"A".to_vec());
+        let b = BytesInput::new(b"B".to_vec());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_crossover_replace(&mut state, &b, 0).unwrap(), MutationResult::Mutated);
+            assert_eq!(a.bytes(), b"B");
+        }
+    }
+
+    #[test]
+    fn test_replace_resize() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(b"A".to_vec());
+        let b = BytesInput::new(b"asdasd fasd fa sdf asdf asdfasfd asdfsadf asdfsadf asdfsa df ".to_vec());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_crossover_replace(&mut state, &b, 0).unwrap(), MutationResult::Mutated);
+        }
     }
 }
