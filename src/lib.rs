@@ -58,8 +58,8 @@ pub use feedback::StateFeedback;
 pub use input::{load_pcaps, HasPackets, HasPcapRepresentation};
 pub use monitor::{FuzzerStatsWrapper, HasStateStats, StateMonitor};
 pub use mutators::{
-    supported_havoc_mutations, HasCrossoverInsertMutation, HasCrossoverReplaceMutation, HasHavocMutations, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator, PacketReorderMutator,
-    PacketSpliceMutator, SupportedHavocMutationsType,
+    supported_havoc_mutations, HasCrossoverInsertMutation, HasCrossoverReplaceMutation, HasHavocMutations, HasSpliceMutation, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator,
+    PacketReorderMutator, PacketSpliceMutator, SupportedHavocMutationsType,
 };
 pub use observer::StateObserver;
 pub use scheduler::PacketMutationScheduler;
@@ -133,6 +133,24 @@ mod tests {
                 PacketType::B(data) => match other {
                     PacketType::A(_) => Ok(MutationResult::Skipped),
                     PacketType::B(other_data) => data.mutate_crossover_replace(state, other_data, stage_idx),
+                },
+            }
+        }
+    }
+
+    impl<S> HasSpliceMutation<S> for PacketType
+    where
+        S: HasRand + HasMaxSize,
+    {
+        fn mutate_splice(&mut self, state: &mut S, other: &Self, stage_idx: i32) -> Result<MutationResult, Error> {
+            match self {
+                PacketType::A(data) => match other {
+                    PacketType::A(other_data) => data.mutate_splice(state, other_data, stage_idx),
+                    PacketType::B(_) => Ok(MutationResult::Skipped),
+                },
+                PacketType::B(data) => match other {
+                    PacketType::A(_) => Ok(MutationResult::Skipped),
+                    PacketType::B(other_data) => data.mutate_splice(state, other_data, stage_idx),
                 },
             }
         }
@@ -254,7 +272,7 @@ mod tests {
             let mutator = PacketMutationScheduler::new(tuple_list!(
                 PacketHavocMutator::new(supported_havoc_mutations()),
                 PacketReorderMutator::new(),
-                //PacketSpliceMutator::new(4),
+                PacketSpliceMutator::new(4),
                 PacketCrossoverInsertMutator::new(),
                 PacketCrossoverReplaceMutator::new(),
                 PacketDeleteMutator::new(4),
@@ -286,7 +304,7 @@ mod tests {
         let mutator = PacketMutationScheduler::new(tuple_list!(
             PacketHavocMutator::new(supported_havoc_mutations()),
             PacketReorderMutator::new(),
-            //PacketSpliceMutator::new(4),
+            PacketSpliceMutator::new(4),
             PacketCrossoverInsertMutator::new(),
             PacketCrossoverReplaceMutator::new(),
             PacketDeleteMutator::new(4),
