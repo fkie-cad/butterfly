@@ -58,8 +58,8 @@ pub use feedback::StateFeedback;
 pub use input::{load_pcaps, HasPackets, HasPcapRepresentation};
 pub use monitor::{FuzzerStatsWrapper, HasStateStats, StateMonitor};
 pub use mutators::{
-    supported_havoc_mutations, HasCrossoverInsertMutation, HasHavocMutations, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator, PacketReorderMutator, PacketSpliceMutator,
-    SupportedHavocMutationsType,
+    supported_havoc_mutations, HasCrossoverInsertMutation, HasCrossoverReplaceMutation, HasHavocMutations, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator, PacketReorderMutator,
+    PacketSpliceMutator, SupportedHavocMutationsType,
 };
 pub use observer::StateObserver;
 pub use scheduler::PacketMutationScheduler;
@@ -115,6 +115,24 @@ mod tests {
                 PacketType::B(data) => match other {
                     PacketType::A(_) => Ok(MutationResult::Skipped),
                     PacketType::B(other_data) => data.mutate_crossover_insert(state, other_data, stage_idx),
+                },
+            }
+        }
+    }
+
+    impl<S> HasCrossoverReplaceMutation<S> for PacketType
+    where
+        S: HasRand + HasMaxSize,
+    {
+        fn mutate_crossover_replace(&mut self, state: &mut S, other: &Self, stage_idx: i32) -> Result<MutationResult, Error> {
+            match self {
+                PacketType::A(data) => match other {
+                    PacketType::A(other_data) => data.mutate_crossover_replace(state, other_data, stage_idx),
+                    PacketType::B(_) => Ok(MutationResult::Skipped),
+                },
+                PacketType::B(data) => match other {
+                    PacketType::A(_) => Ok(MutationResult::Skipped),
+                    PacketType::B(other_data) => data.mutate_crossover_replace(state, other_data, stage_idx),
                 },
             }
         }
@@ -238,7 +256,7 @@ mod tests {
                 PacketReorderMutator::new(),
                 //PacketSpliceMutator::new(4),
                 PacketCrossoverInsertMutator::new(),
-                //PacketCrossoverReplaceMutator::new(),
+                PacketCrossoverReplaceMutator::new(),
                 PacketDeleteMutator::new(4),
                 PacketDuplicateMutator::new(16)
             ));
@@ -270,7 +288,7 @@ mod tests {
             PacketReorderMutator::new(),
             //PacketSpliceMutator::new(4),
             PacketCrossoverInsertMutator::new(),
-            //PacketCrossoverReplaceMutator::new(),
+            PacketCrossoverReplaceMutator::new(),
             PacketDeleteMutator::new(4),
             PacketDuplicateMutator::new(16)
         ));
@@ -278,7 +296,7 @@ mod tests {
         let mut executor = ExampleExecutor::new(tuple_list!(state_observer));
         fuzzer.fuzz_loop(&mut stages, &mut executor, &mut state, &mut mgr).unwrap();
     }
-    
+
     #[derive(Hash, Debug, Clone, Serialize, Deserialize)]
     struct RawInput {
         packets: Vec<BytesInput>,
@@ -316,7 +334,7 @@ mod tests {
             todo!();
         }
     }
-    
+
     struct RawExecutor<OT, S>
     where
         OT: ObserversTuple<RawInput, S>,
@@ -375,7 +393,7 @@ mod tests {
             &mut self.observers
         }
     }
-    
+
     #[allow(dead_code)]
     fn raw_harness() {
         let mon = FuzzerStatsWrapper::new(StateMonitor::new(), "fuzzer_stats", 30);

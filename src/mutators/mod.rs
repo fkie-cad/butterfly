@@ -5,7 +5,7 @@ mod havoc;
 mod reorder;
 mod splice;
 
-pub use crossover::{HasCrossoverInsertMutation, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator};
+pub use crossover::{HasCrossoverInsertMutation, HasCrossoverReplaceMutation, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator};
 pub use delete::PacketDeleteMutator;
 pub use duplicate::PacketDuplicateMutator;
 pub use havoc::{supported_havoc_mutations, HasHavocMutations, PacketHavocMutator, SupportedHavocMutationsType};
