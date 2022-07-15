@@ -74,14 +74,14 @@ where
 
         let to = state.rand_mut().below(self_len as u64) as usize;
         let from = state.rand_mut().below(other_len as u64) as usize;
-        let delta = (other_len - from) as i64 - (self_len - to) as i64;
+        let len = other_len - from;
 
         // Make sure we have enough space for all the bytes from `other`
-        if delta > 0 {
-            self.bytes_mut().resize(self_len + delta as usize, 0);
+        if to + len > self_len {
+            self.bytes_mut().resize(to + len, 0);
         }
 
-        self.bytes_mut()[to..].copy_from_slice(&other.bytes()[from..]);
+        self.bytes_mut()[to..to + len].copy_from_slice(&other.bytes()[from..from + len]);
 
         Ok(MutationResult::Mutated)
     }
@@ -152,5 +152,83 @@ where
 {
     fn name(&self) -> &str {
         "PacketSpliceMutator"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use libafl::{
+        bolts::rands::StdRand,
+        inputs::BytesInput,
+        mutators::MutationResult,
+        state::{HasMaxSize, HasRand},
+    };
+
+    struct TestState {
+        rand: StdRand,
+        max_size: usize,
+    }
+    impl TestState {
+        fn new() -> Self {
+            Self {
+                rand: StdRand::with_seed(0),
+                max_size: 0,
+            }
+        }
+    }
+    impl HasRand for TestState {
+        type Rand = StdRand;
+
+        fn rand(&self) -> &StdRand {
+            &self.rand
+        }
+
+        fn rand_mut(&mut self) -> &mut StdRand {
+            &mut self.rand
+        }
+    }
+    impl HasMaxSize for TestState {
+        fn max_size(&self) -> usize {
+            self.max_size
+        }
+
+        fn set_max_size(&mut self, max_size: usize) {
+            self.max_size = max_size;
+        }
+    }
+
+    #[test]
+    fn test_splice_empty() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(Vec::new());
+        let b = BytesInput::new(Vec::new());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_splice(&mut state, &b, 0).unwrap(), MutationResult::Skipped);
+        }
+    }
+
+    #[test]
+    fn test_splice_len1() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(b"A".to_vec());
+        let b = BytesInput::new(b"B".to_vec());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_splice(&mut state, &b, 0).unwrap(), MutationResult::Mutated,);
+            assert_eq!(a.bytes(), b"B");
+        }
+    }
+
+    #[test]
+    fn test_splice_resize() {
+        let mut state = TestState::new();
+        let mut a = BytesInput::new(b"A".to_vec());
+        let b = BytesInput::new(b"asdasd fasd fa sdf asdf asdfasfd asdfsadf asdfsadf asdfsa df ".to_vec());
+
+        for _ in 0..100 {
+            assert_eq!(a.mutate_splice(&mut state, &b, 0).unwrap(), MutationResult::Mutated,);
+        }
     }
 }
