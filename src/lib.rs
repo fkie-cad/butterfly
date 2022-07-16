@@ -58,7 +58,7 @@ mod scheduler;
 pub use event::{USER_STAT_EDGES, USER_STAT_NODES};
 pub use feedback::StateFeedback;
 pub use input::{load_pcaps, HasPackets, HasPcapRepresentation};
-pub use monitor::{FuzzerStatsWrapper, HasStateStats, StateMonitor};
+pub use monitor::{HasStateStats, StateMonitor};
 pub use mutators::{
     supported_havoc_mutations, HasCrossoverInsertMutation, HasCrossoverReplaceMutation, HasHavocMutation, HasSpliceMutation, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator,
     PacketReorderMutator, PacketSpliceMutator, SupportedHavocMutationsType,
@@ -263,7 +263,7 @@ mod tests {
     #[allow(dead_code)]
     fn multicore_harness() {
         let shmem_provider = StdShMemProvider::new().unwrap();
-        let mon = FuzzerStatsWrapper::new(StateMonitor::new(), "fuzzer_stats", 30);
+        let mon = StateMonitor::new();
 
         let mut run_client = |_state: Option<_>, mut mgr, _core_id| {
             let state_observer = StateObserver::<TargetState>::new("state");
@@ -296,7 +296,7 @@ mod tests {
 
     #[allow(dead_code)]
     fn singlecore_harness() {
-        let mon = FuzzerStatsWrapper::new(StateMonitor::new(), "fuzzer_stats", 30);
+        let mon = StateMonitor::new();
         let mut mgr = SimpleEventManager::new(mon);
         let state_observer = StateObserver::<TargetState>::new("state");
         let mut feedback = StateFeedback::new(&state_observer);
@@ -408,7 +408,7 @@ mod tests {
 
     #[allow(dead_code)]
     fn raw_harness() {
-        let mon = FuzzerStatsWrapper::new(StateMonitor::new(), "fuzzer_stats", 30);
+        let mon = StateMonitor::new();
         let mut mgr = SimpleEventManager::new(mon);
         let state_observer = StateObserver::<TargetState>::new("state");
         let mut feedback = StateFeedback::new(&state_observer);
