@@ -1,3 +1,7 @@
 - [ ] token mutations
 - [ ] like toml monitor but for dot output of statemachine
 - [ ] more sophisticated mutation scheduling by tracking potency of packets
+- [ ] pcap tcp stream extractor ?
+- [ ] wiki pages
+  - How to load pcaps
+  - Monitoring and logging: Explaining DOT wrapper and state monitor and monitor trait
