@@ -4,7 +4,7 @@ This example demonstrates how to setup a blackbox FTP fuzzer
 with butterfly.    
 It is based on the following tutorials:
 - [First steps: Creating a minimal FTP fuzzer](https://github.com/fkie-cad/butterfly/wiki/First-steps:-Creating-a-minimal-FTP-fuzzer)
-- TODO: mutation entry
+- [Enabling-more-complex-mutations](https://github.com/fkie-cad/butterfly/wiki/Enabling-more-complex-mutations)
 
 ## Building
 ```
