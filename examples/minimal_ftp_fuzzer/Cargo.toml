@@ -10,5 +10,5 @@ debug = true
 
 [dependencies]
 libafl = "0.8"
-butterfly = { version = "0.1.1", package = "butterfly-fuzz" }
+butterfly = { path = "../../", package = "butterfly-fuzz" }
 serde = "1.0"

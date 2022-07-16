@@ -2,8 +2,9 @@
 
 This example demonstrates how to setup a blackbox FTP fuzzer
 with butterfly.    
-A detailed walkthrough that explains every part of the harness
-can be found in [the wiki](https://github.com/fkie-cad/butterfly/wiki/First-steps:-Creating-a-minimal-FTP-fuzzer).
+It is based on the following tutorials:
+- [First steps: Creating a minimal FTP fuzzer](https://github.com/fkie-cad/butterfly/wiki/First-steps:-Creating-a-minimal-FTP-fuzzer)
+- TODO: mutation entry
 
 ## Building
 ```
@@ -34,7 +35,7 @@ killall -w fftp
 ```
 
 ## Results
-After 50 iterations with only basic mutations like duplication, reordering and deletion we get the following state graph:     
+After 50 iterations we inferred the following state graph:     
 <br>
 ![](./state-graph.png)
 <br><br>

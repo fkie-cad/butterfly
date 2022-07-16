@@ -10,15 +10,20 @@ use libafl::{
     executors::{Executor, ExitKind, HasObservers},
     events::SimpleEventManager,
     feedbacks::CrashFeedback,
-    state::StdState,
+    state::{StdState, HasRand, HasMaxSize},
     corpus::InMemoryCorpus,
     schedulers::QueueScheduler,
     stages::StdMutationalStage,
+    mutators::{MutationResult, MutatorsTuple},
 };
 use butterfly::{
     HasPackets, StateObserver, StateMonitor, 
     StateFeedback, PacketMutationScheduler,
     PacketReorderMutator, PacketDeleteMutator, PacketDuplicateMutator,
+    PacketCrossoverInsertMutator, HasCrossoverInsertMutation,
+    HasCrossoverReplaceMutation, PacketCrossoverReplaceMutator,
+    HasSpliceMutation, PacketSpliceMutator,
+    HasHavocMutation, PacketHavocMutator, supported_havoc_mutations,
 };
 use serde::{Serialize, Deserialize};
 use std::marker::PhantomData;
@@ -53,6 +58,87 @@ enum FTPCommand {
     LIST(Option<BytesInput>),
     CWD(BytesInput),
     QUIT,
+}
+
+impl FTPCommand {
+    fn inner_data(&self) -> Option<&BytesInput> {
+        match self {
+            FTPCommand::USER(data) |
+            FTPCommand::PASS(data) |
+            FTPCommand::CWD(data) |
+            FTPCommand::LIST(Some(data)) => Some(data),
+            _ => None,
+        }
+    }
+    
+    fn inner_data_mut(&mut self) -> Option<&mut BytesInput> {
+        match self {
+            FTPCommand::USER(data) |
+            FTPCommand::PASS(data) |
+            FTPCommand::CWD(data) |
+            FTPCommand::LIST(Some(data)) => Some(data),
+            _ => None,
+        }
+    }
+}
+
+impl<S> HasCrossoverInsertMutation<S> for FTPCommand
+where
+    S: HasRand + HasMaxSize,
+{
+    fn mutate_crossover_insert(&mut self, state: &mut S, other: &Self, stage_idx: i32) -> Result<MutationResult, Error> {
+        if let Some(data) = self.inner_data_mut() {
+            if let Some(other_data) = other.inner_data() {
+                return data.mutate_crossover_insert(state, other_data, stage_idx);
+            }
+        }
+        
+        Ok(MutationResult::Skipped)
+    }
+}
+
+impl<S> HasCrossoverReplaceMutation<S> for FTPCommand
+where
+    S: HasRand + HasMaxSize,
+{
+    fn mutate_crossover_replace(&mut self, state: &mut S, other: &Self, stage_idx: i32) -> Result<MutationResult, Error> {
+        if let Some(data) = self.inner_data_mut() {
+            if let Some(other_data) = other.inner_data() {
+                return data.mutate_crossover_replace(state, other_data, stage_idx);
+            }
+        }
+        
+        Ok(MutationResult::Skipped)
+    }
+}
+
+impl<S> HasSpliceMutation<S> for FTPCommand
+where
+    S: HasRand + HasMaxSize,
+{
+    fn mutate_splice(&mut self, state: &mut S, other: &Self, stage_idx: i32) -> Result<MutationResult, Error> {
+        if let Some(data) = self.inner_data_mut() {
+            if let Some(other_data) = other.inner_data() {
+                return data.mutate_splice(state, other_data, stage_idx);
+            }
+        }
+        
+        Ok(MutationResult::Skipped)
+    }
+}
+
+impl<MT, S> HasHavocMutation<MT, S> for FTPCommand
+where
+   MT: MutatorsTuple<BytesInput, S>,
+   S: HasRand + HasMaxSize,
+{
+    fn mutate_havoc(&mut self, state: &mut S, mutations: &mut MT, mutation: usize, stage_idx: i32) -> Result<MutationResult, Error> {
+        if let Some(data) = self.inner_data_mut() {
+            data.mutate_havoc(state, mutations, mutation, stage_idx)
+        } else {
+            Ok(MutationResult::Skipped)
+        }
+    }
 }
 
 #[derive(Hash, Debug, Clone, Serialize, Deserialize)]
@@ -295,21 +381,21 @@ where
             // Send command
             let read_resp = match packet {
                 FTPCommand::USER(name) => {
-                    cmd_conn.write_all("USER ".as_bytes())?;
+                    cmd_conn.write_all(b"USER ")?;
                     cmd_conn.write_all(name.bytes())?;
-                    cmd_conn.write_all("\r\n".as_bytes())?;
+                    cmd_conn.write_all(b"\r\n")?;
                     cmd_conn.flush()?;
                     true
                 },
                 FTPCommand::PASS(password) => {
-                    cmd_conn.write_all("PASS ".as_bytes())?;
+                    cmd_conn.write_all(b"PASS ")?;
                     cmd_conn.write_all(password.bytes())?;
-                    cmd_conn.write_all("\r\n".as_bytes())?;
+                    cmd_conn.write_all(b"\r\n")?;
                     cmd_conn.flush()?;
                     true
                 },
                 FTPCommand::PASV => {
-                    cmd_conn.write_all("PASV\r\n".as_bytes())?;
+                    cmd_conn.write_all(b"PASV\r\n")?;
                     
                     match self.get_response(&mut cmd_conn) {
                         Some(227) => {
@@ -328,21 +414,21 @@ where
                     false
                 },
                 FTPCommand::TYPE(arg1, arg2) => {
-                    cmd_conn.write_all("TYPE ".as_bytes())?;
+                    cmd_conn.write_all(b"TYPE ")?;
                     cmd_conn.write_all(&[*arg1, *arg2])?;
-                    cmd_conn.write_all("\r\n".as_bytes())?;
+                    cmd_conn.write_all(b"\r\n")?;
                     cmd_conn.flush()?;
                     true
                 },
                 FTPCommand::LIST(dir) => {
-                    cmd_conn.write_all("LIST".as_bytes())?;
+                    cmd_conn.write_all(b"LIST")?;
                     
                     if let Some(dir) = dir {
-                        cmd_conn.write_all(" ".as_bytes())?;
+                        cmd_conn.write_all(b" ")?;
                         cmd_conn.write_all(dir.bytes())?;
                     }
                     
-                    cmd_conn.write_all("\r\n".as_bytes())?;
+                    cmd_conn.write_all(b"\r\n")?;
                     cmd_conn.flush()?;
                     
                     match self.get_response(&mut cmd_conn) {
@@ -370,14 +456,14 @@ where
                     false
                 },
                 FTPCommand::CWD(dir) => {
-                    cmd_conn.write_all("CWD ".as_bytes())?;
+                    cmd_conn.write_all(b"CWD ")?;
                     cmd_conn.write_all(dir.bytes())?;
-                    cmd_conn.write_all("\r\n".as_bytes())?;
+                    cmd_conn.write_all(b"\r\n")?;
                     cmd_conn.flush()?;
                     true
                 },
                 FTPCommand::QUIT => {
-                    cmd_conn.write_all("QUIT\r\n".as_bytes())?;
+                    cmd_conn.write_all(b"QUIT\r\n")?;
                     cmd_conn.flush()?;
                     
                     if self.get_response(&mut cmd_conn).is_none() {
@@ -418,7 +504,11 @@ fn main() {
         tuple_list!(
             PacketReorderMutator::new(),
             PacketDeleteMutator::new(4),
-            PacketDuplicateMutator::new(16)
+            PacketDuplicateMutator::new(16),
+            PacketCrossoverInsertMutator::new(),
+            PacketCrossoverReplaceMutator::new(),
+            PacketSpliceMutator::new(4),
+            PacketHavocMutator::new(supported_havoc_mutations()),
         )
     );
     let mut stages = tuple_list!(
@@ -429,9 +519,9 @@ fn main() {
     // Manually put an item into the corpus
     let example_input = FTPInput {
         packets: vec![
-            FTPCommand::USER(BytesInput::new("anonymous".as_bytes().to_vec())),
-            FTPCommand::PASS(BytesInput::new("anonymous".as_bytes().to_vec())),
-            FTPCommand::CWD(BytesInput::new("/".as_bytes().to_vec())),
+            FTPCommand::USER(BytesInput::new(b"anonymous".to_vec())),
+            FTPCommand::PASS(BytesInput::new(b"anonymous".to_vec())),
+            FTPCommand::CWD(BytesInput::new(b"/".to_vec())),
             FTPCommand::PASV,
             FTPCommand::TYPE(b'A', b'N'),
             FTPCommand::LIST(None),
