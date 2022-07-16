@@ -3,11 +3,11 @@
 //! # Overview
 //! butterfly offers
 //! 1. A new representation of inputs as sequences of packets
-//!    that can be loaded from pcap files
+//!    that can be loaded from pcap files. The packets can be of any type.
 //! 2. Packet-aware mutators that mutate only one packet and leave
 //!    all others intact to reach deeper program states
 //! 3. Protocol-aware mutators that can reorder, duplicate, splice and delete packets
-//!    in addition to "normal" havoc mutations
+//!    in addition to "normal" mutations
 //! 4. An observer that tracks which states the target goes through as it processes the packets.    
 //!    This is used to build a state-graph of the target and identify
 //!    when new states have been reached.
@@ -17,15 +17,17 @@
 //!   - In order to create a new, working input type you MUST implement the following traits:       
 //!   [`Hash`](core::hash::Hash), [`Debug`](core::fmt::Debug), [`Clone`](core::clone::Clone), [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize), [`Input`](libafl::inputs::Input)     
 //!   - To make it usable by other butterfly components, implement [`HasPackets`], [`HasLen`](libafl::bolts::HasLen)
-//!   - If you want to use havoc mutations, implement [`HasHavocMutations`]
 //!   - If you want to load it from a PCAP file, implement [`HasPcapRepresentation`]
 //! - **Mutators**
-//!   - havoc: [`PacketHavocMutator`] gets a list of havoc mutators and uses [`HasHavocMutations`] to mutate a selected packet.      
+//!   - havoc: [`PacketHavocMutator`] gets a list of havoc mutators and uses [`HasHavocMutation`] to mutate a selected packet.      
 //!     Not all of libafls havoc mutators work with packet-based inputs, though. [`supported_havoc_mutations`] gives you all havoc
 //!     mutators that work
 //!   - packet-mutators:
-//!     - [`PacketDeleteMutator`], [`PacketDuplicateMutator`], [`PacketReorderMutator`] work with all input types
-//!     - the rest only works with inputs whose packets implement [`HasBytesVec`](libafl::inputs::HasBytesVec)
+//!     - [`PacketDeleteMutator`], [`PacketDuplicateMutator`], [`PacketReorderMutator`]
+//!   - crossover mutators:
+//!     - [`PacketCrossoverInsertMutator`] and [`PacketCrossoverReplaceMutator`]
+//!   - splicing mutators:
+//!     - [`PacketSpliceMutator`]
 //! - **Observer**
 //!   - [`StateObserver`] builds a state-graph
 //!   - The executor is responsible for calling [`StateObserver::record()`] with state information inferred from
@@ -58,7 +60,7 @@ pub use feedback::StateFeedback;
 pub use input::{load_pcaps, HasPackets, HasPcapRepresentation};
 pub use monitor::{FuzzerStatsWrapper, HasStateStats, StateMonitor};
 pub use mutators::{
-    supported_havoc_mutations, HasCrossoverInsertMutation, HasCrossoverReplaceMutation, HasHavocMutations, HasSpliceMutation, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator,
+    supported_havoc_mutations, HasCrossoverInsertMutation, HasCrossoverReplaceMutation, HasHavocMutation, HasSpliceMutation, PacketCrossoverInsertMutator, PacketCrossoverReplaceMutator, PacketDeleteMutator, PacketDuplicateMutator, PacketHavocMutator,
     PacketReorderMutator, PacketSpliceMutator, SupportedHavocMutationsType,
 };
 pub use observer::StateObserver;
@@ -156,20 +158,21 @@ mod tests {
         }
     }
 
-    #[derive(Hash, Debug, Clone, Serialize, Deserialize)]
-    struct PacketInput {
-        packets: Vec<PacketType>,
-    }
-    impl<MT, S> HasHavocMutations<MT, S> for PacketInput
+    impl<MT, S> HasHavocMutation<MT, S> for PacketType
     where
         MT: MutatorsTuple<BytesInput, S>,
-        S: HasRand,
+        S: HasRand + HasMaxSize,
     {
-        fn mutate_packet(&mut self, packet: usize, mutations: &mut MT, mutation: usize, state: &mut S, stage_idx: i32) -> Result<MutationResult, Error> {
-            match &mut self.packets[packet] {
+        fn mutate_havoc(&mut self, state: &mut S, mutations: &mut MT, mutation: usize, stage_idx: i32) -> Result<MutationResult, Error> {
+            match self {
                 PacketType::A(data) | PacketType::B(data) => mutations.get_and_mutate(mutation, state, data, stage_idx),
             }
         }
+    }
+
+    #[derive(Hash, Debug, Clone, Serialize, Deserialize)]
+    struct PacketInput {
+        packets: Vec<PacketType>,
     }
     impl Input for PacketInput {
         fn generate_name(&self, _idx: usize) -> String {
@@ -318,15 +321,6 @@ mod tests {
     #[derive(Hash, Debug, Clone, Serialize, Deserialize)]
     struct RawInput {
         packets: Vec<BytesInput>,
-    }
-    impl<MT, S> HasHavocMutations<MT, S> for RawInput
-    where
-        MT: MutatorsTuple<BytesInput, S>,
-        S: HasRand,
-    {
-        fn mutate_packet(&mut self, packet: usize, mutations: &mut MT, mutation: usize, state: &mut S, stage_idx: i32) -> Result<MutationResult, Error> {
-            mutations.get_and_mutate(mutation, state, &mut self.packets[packet], stage_idx)
-        }
     }
     impl Input for RawInput {
         fn generate_name(&self, _idx: usize) -> String {

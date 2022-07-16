@@ -1,3 +1,4 @@
+use crate::input::HasPackets;
 use libafl::{
     bolts::{
         rands::Rand,
@@ -6,7 +7,7 @@ use libafl::{
     },
     inputs::{bytes::BytesInput, Input},
     mutators::{mutations::*, MutationResult, Mutator, MutatorsTuple},
-    state::HasRand,
+    state::{HasMaxSize, HasRand},
     Error,
 };
 use std::marker::PhantomData;
@@ -85,84 +86,85 @@ pub fn supported_havoc_mutations() -> SupportedHavocMutationsType {
     )
 }
 
-/// Signifies that an input can mutate its packets with havoc mutators.
+/// Signifies that a packet type supports the [`PacketHavocMutator`].
 ///
-/// This must be implemented by an input if the [`PacketHavocMutator`] is used.
-/// See [`mutate_packet()`](crate::HasHavocMutations::mutate_packet()) for more
-/// information on how to handle the mutation.
+/// If you want to use the [`PacketHavocMutator`] your Input type must have
+/// a vector of packets that implement this trait.     
+/// IMPORTANT: This must be implemented by the packet type, not the input type.
 ///
-/// This trait is necessary because not all packets may be represented as [`BytesInputs`](libafl::inputs::BytesInput).
-/// Packets can also be structs or enums and this trait makes it the responsibility of the
-/// input - who knows its structure - to execute a mutator selected by the fuzzer.
-pub trait HasHavocMutations<MT, S>
-where
-    MT: MutatorsTuple<BytesInput, S>,
-    S: HasRand,
-{
-    /// Given a list of havoc mutators, mutate one packet with them.
-    ///
-    /// # Arguments
-    /// - `packet`: index of the packet that shall be mutated
-    /// - `mutations`: [`MutatorsTuple`](libafl::mutators::MutatorsTuple) with mutators that mutate [`BytesInputs`](libafl::inputs::BytesInput)
-    /// - `mutation`: An index into the `mutations` tuple selected by the fuzzer.
-    ///   This identifies the mutation to perform.
-    /// - `state`: libafls state
-    /// - `stage_idx`: libafls stage index
-    ///
-    /// # Example
-    /// If a packet only is a [`BytesInput`](libafl::inputs::BytesInput) this function may look like
-    /// ```
-    /// struct PacketInput {
-    ///     packets: Vec<BytesInput>,
-    /// }
-    /// impl<MT, S> HasHavocMutations<MT, S> for PacketInput
-    /// where
-    ///     MT: MutatorsTuple<BytesInput, S>,
-    ///     S: HasRand,
-    /// {
-    ///     fn mutate_packet(&mut self, packet: usize, mutations: &mut MT, mutation: usize, state: &mut S, stage_idx: i32) -> Result<MutationResult, Error> {
-    ///         mutations.get_and_mutate(mutation, state, &mut self.packets[packet], stage_idx)
-    ///     }
-    /// }
-    /// ```
-    fn mutate_packet(&mut self, packet: usize, mutations: &mut MT, mutation: usize, state: &mut S, stage_idx: i32) -> Result<MutationResult, Error>;
-}
-
-/// A mutator that applies libafls havoc mutators to a single, random packet.
-///
-/// Not all of libafls mutators are supported though, see
-/// [`supported_havoc_mutations()`](crate::supported_havoc_mutations) for
-/// a list of all supported mutators.
+/// Already implemented for:
+/// - [`BytesInput`](libafl::inputs::BytesInput)
 ///
 /// # Example
+/// Suppose we have the following packet type
 /// ```
-/// let mutator = PacketHavocMutator::new(supported_havoc_mutations());
+/// enum PacketType {
+///    A(BytesInput),
+///    B(BytesInput),
+/// }
 /// ```
-/// or if you want specific mutators
+/// Then we can implement this trait as follows
 /// ```
-/// let mutator = PacketHavocMutator::new(
-///     tuple_list!(
-///         BitFlipMutator::new(),
-///         ByteFlipMutator::new()
-///     )
-/// );
+/// impl<MT, S> HasHavocMutation<MT, S> for PacketType
+/// where
+///    MT: MutatorsTuple<BytesInput, S>,
+///    S: HasRand + HasMaxSize,
+/// {
+///    fn mutate_havoc(&mut self, state: &mut S, mutations: &mut MT, mutation: usize, stage_idx: i32) -> Result<MutationResult, Error> {
+///        match self {
+///            PacketType::A(data) |
+///            PacketType::B(data) => mutations.get_and_mutate(mutation, state, data, stage_idx),
+///        }
+///    }
+/// }
 /// ```
-pub struct PacketHavocMutator<I, MT, S>
+/// And now we are able to use the [`PacketHavocMutator`].
+pub trait HasHavocMutation<MT, S>
 where
-    I: Input + HasLen + HasHavocMutations<MT, S>,
     MT: MutatorsTuple<BytesInput, S>,
-    S: HasRand,
+    S: HasRand + HasMaxSize,
+{
+    /// Perform a single havoc mutation on the current packet
+    ///
+    /// # Arguments
+    /// - `state`: libafls state
+    /// - `mutations`: tuple of havoc mutators
+    /// - `mutation`: index into the tuple, the mutator to execute
+    /// - `stage_idx`: stage index from libafl
+    fn mutate_havoc(&mut self, state: &mut S, mutations: &mut MT, mutation: usize, stage_idx: i32) -> Result<MutationResult, Error>;
+}
+
+impl<MT, S> HasHavocMutation<MT, S> for BytesInput
+where
+    MT: MutatorsTuple<BytesInput, S>,
+    S: HasRand + HasMaxSize,
+{
+    fn mutate_havoc(&mut self, state: &mut S, mutations: &mut MT, mutation: usize, stage_idx: i32) -> Result<MutationResult, Error> {
+        mutations.get_and_mutate(mutation, state, self, stage_idx)
+    }
+}
+
+/// A mutator that applies a set of havoc mutations to a single packet.
+///
+/// `P` denotes the packet type that MUST implement [`HasHavocMutation`].
+pub struct PacketHavocMutator<I, MT, S, P>
+where
+    P: HasHavocMutation<MT, S>,
+    I: Input + HasLen + HasPackets<P>,
+    MT: MutatorsTuple<BytesInput, S>,
+    S: HasRand + HasMaxSize,
 {
     /// These mutation operators must exclusively be for BytesInputs
     mutations: MT,
-    phantom: PhantomData<(S, I)>,
+    phantom: PhantomData<(I, S, P)>,
 }
 
-impl<I, MT, S> PacketHavocMutator<I, MT, S>
+impl<I, MT, S, P> PacketHavocMutator<I, MT, S, P>
 where
-    I: Input + HasLen + HasHavocMutations<MT, S>,
+    P: HasHavocMutation<MT, S>,
+    I: Input + HasLen + HasPackets<P>,
     MT: MutatorsTuple<BytesInput, S>,
-    S: HasRand,
+    S: HasRand + HasMaxSize,
 {
     /// Create a new PacketHavocMutator with mutators that can be
     /// applied to [`BytesInputs`](libafl::inputs::BytesInput).
@@ -173,22 +175,23 @@ where
         }
     }
 
-    /// Get the number of stack mutations to apply
-    fn iterations(&self, state: &mut S, _input: &I) -> u64 {
+    /// Get the number of stacked mutations to apply
+    fn iterations(&self, state: &mut S) -> u64 {
         state.rand_mut().below(16) as u64
     }
 
     /// Get the next mutation to apply (index into mutation list)
-    fn schedule(&self, state: &mut S, _input: &I) -> usize {
+    fn schedule(&self, state: &mut S) -> usize {
         state.rand_mut().below(self.mutations.len() as u64) as usize
     }
 }
 
-impl<I, MT, S> Mutator<I, S> for PacketHavocMutator<I, MT, S>
+impl<I, MT, S, P> Mutator<I, S> for PacketHavocMutator<I, MT, S, P>
 where
-    I: Input + HasLen + HasHavocMutations<MT, S>,
+    P: HasHavocMutation<MT, S>,
+    I: Input + HasLen + HasPackets<P>,
     MT: MutatorsTuple<BytesInput, S>,
-    S: HasRand,
+    S: HasRand + HasMaxSize,
 {
     fn mutate(&mut self, state: &mut S, input: &mut I, stage_idx: i32) -> Result<MutationResult, Error> {
         if input.len() == 0 {
@@ -196,13 +199,13 @@ where
         }
 
         let mut result = MutationResult::Skipped;
-        let iters = self.iterations(state, input);
+        let iters = self.iterations(state);
         let packet = state.rand_mut().below(input.len() as u64) as usize;
 
         for _ in 0..iters {
-            let mutation = self.schedule(state, input);
+            let mutation = self.schedule(state);
 
-            let outcome = input.mutate_packet(packet, &mut self.mutations, mutation, state, stage_idx)?;
+            let outcome = input.packets_mut()[packet].mutate_havoc(state, &mut self.mutations, mutation, stage_idx)?;
 
             if outcome == MutationResult::Mutated {
                 result = MutationResult::Mutated;
@@ -213,11 +216,12 @@ where
     }
 }
 
-impl<I, MT, S> Named for PacketHavocMutator<I, MT, S>
+impl<I, MT, S, P> Named for PacketHavocMutator<I, MT, S, P>
 where
-    I: Input + HasLen + HasHavocMutations<MT, S>,
+    P: HasHavocMutation<MT, S>,
+    I: Input + HasLen + HasPackets<P>,
     MT: MutatorsTuple<BytesInput, S>,
-    S: HasRand,
+    S: HasRand + HasMaxSize,
 {
     fn name(&self) -> &str {
         "PacketHavocMutator"

@@ -11,7 +11,7 @@ use std::marker::PhantomData;
 /// Signifies that a packet type supports the [`PacketCrossoverInsertMutator`] mutator.    
 ///
 /// If you want to use the [`PacketCrossoverInsertMutator`] your Input type must have
-/// a vector of packets that implement this trait.
+/// a vector of packets that implement this trait.    
 /// IMPORTANT: This must be implemented on the packet type, not the input type.
 ///
 /// Already implemented for
@@ -150,7 +150,7 @@ where
 /// Signifies that a packet type supports the [`PacketCrossoverReplaceMutator`] mutator.    
 ///
 /// If you want to use the [`PacketCrossoverReplaceMutator`] your Input type must have
-/// a vector of packets that implement this trait.
+/// a vector of packets that implement this trait.    
 /// IMPORTANT: This must be implemented on the packet type, not the input type.
 ///
 /// Already implemented for
