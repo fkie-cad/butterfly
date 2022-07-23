@@ -1,5 +1,5 @@
 use libafl::{
-    Error, StdFuzzer, Fuzzer, Evaluator,
+    Error, StdFuzzer, Fuzzer,
     inputs::{BytesInput, Input, HasBytesVec},
     bolts::{
         HasLen,
@@ -24,12 +24,16 @@ use butterfly::{
     HasCrossoverReplaceMutation, PacketCrossoverReplaceMutator,
     HasSpliceMutation, PacketSpliceMutator,
     HasHavocMutation, PacketHavocMutator, supported_havoc_mutations,
+    HasPcapRepresentation, load_pcaps
 };
 use serde::{Serialize, Deserialize};
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter};
 use std::net::{TcpStream, SocketAddrV4, Ipv4Addr};
 use std::io::{Read, Write};
+use pcap::{Capture, Offline};
+use etherparse;
+use std::path::Path;
 
 fn parse_decimal(buf: &[u8]) -> (u32, usize) {
     let mut res = 0;
@@ -164,8 +168,87 @@ impl HasLen for FTPInput {
 
 impl Input for FTPInput {
     fn generate_name(&self, idx: usize) -> String {
-        // generally a bad but for this example ok
+        // generally a bad idea but for this example ok
         format!("ftpinput-{}", idx)
+    }
+}
+
+// Add pcap support to FTPInput
+impl HasPcapRepresentation<FTPInput> for FTPInput {
+    fn from_pcap(mut capture: Capture<Offline>) -> Result<FTPInput, Error> {
+        // Packets extracted from pcap
+        let mut packets = Vec::<FTPCommand>::new();
+        // Port numbers of the command connection: (client port, server port)
+        let mut command_connection = None;
+        
+        while let Ok(packet) = capture.next() {
+            let packet = etherparse::PacketHeaders::from_ethernet_slice(&packet.data).unwrap();
+            
+            if let Some(etherparse::TransportHeader::Tcp(tcp)) = &packet.transport {
+                let packet_ports = (tcp.source_port, tcp.destination_port);
+                
+                // Does the client make a connection to the server ?
+                if tcp.syn && !tcp.ack {
+                    // We only care about the first connection that is established as
+                    // it is the command connection.
+                    // All other connections are data connections which we don't care about.
+                    if command_connection.is_none() {
+                        command_connection = Some(packet_ports);
+                    }
+                }
+                // Was the command connection closed ?
+                else if tcp.fin || tcp.rst {
+                    if Some(packet_ports) == command_connection {
+                        break;
+                    }
+                }
+                // Was data transferred ?
+                else if packet.payload.len() > 4 {
+                    if Some(packet_ports) == command_connection {
+                        // First find the \r\n that terminates a command
+                        let mut linebreak = 0;
+                        while linebreak < packet.payload.len() - 1 {
+                            if packet.payload[linebreak] == b'\r' && packet.payload[linebreak + 1] == b'\n' {
+                                break;
+                            }
+                            linebreak += 1;
+                        }
+                        assert!(linebreak < packet.payload.len() - 1);
+                        
+                        // Then parse the command
+                        let command = match &packet.payload[0..4] {
+                            b"USER" => FTPCommand::USER(BytesInput::new(packet.payload[5..linebreak].to_vec())),
+                            b"PASS" => FTPCommand::PASS(BytesInput::new(packet.payload[5..linebreak].to_vec())),
+                            b"CWD " => FTPCommand::CWD(BytesInput::new(packet.payload[4..linebreak].to_vec())),
+                            b"PASV" => FTPCommand::PASV,
+                            b"TYPE" => {
+                                if linebreak > 7 {
+                                    FTPCommand::TYPE(packet.payload[5], packet.payload[7])
+                                } else {
+                                    FTPCommand::TYPE(packet.payload[5], b'N')
+                                }
+                            },
+                            b"LIST" => {
+                                if linebreak > 5 {
+                                    FTPCommand::LIST(Some(BytesInput::new(packet.payload[5..linebreak].to_vec())))
+                                } else {
+                                    FTPCommand::LIST(None)
+                                }
+                            },
+                            b"QUIT" => FTPCommand::QUIT,
+                            // Ignore other commands:
+                            _ => continue,
+                        };
+                        
+                        packets.push(command);
+                    }
+                }
+            }
+        }
+        
+        Ok(FTPInput {
+            packets
+        })
     }
 }
 
@@ -516,19 +599,8 @@ fn main() {
     );
     let mut executor = FTPExecutor::new(tuple_list!(state_observer));
     
-    // Manually put an item into the corpus
-    let example_input = FTPInput {
-        packets: vec![
-            FTPCommand::USER(BytesInput::new(b"anonymous".to_vec())),
-            FTPCommand::PASS(BytesInput::new(b"anonymous".to_vec())),
-            FTPCommand::CWD(BytesInput::new(b"/".to_vec())),
-            FTPCommand::PASV,
-            FTPCommand::TYPE(b'A', b'N'),
-            FTPCommand::LIST(None),
-            FTPCommand::QUIT,
-        ],
-    };
-    fuzzer.evaluate_input(&mut state, &mut executor, &mut mgr, example_input).unwrap();
+    // Load corpus
+    load_pcaps(&mut state, &mut fuzzer, &mut executor, &mut mgr, Path::new("pcaps")).unwrap();
     
     // Start the campaign
     fuzzer.fuzz_loop_for(&mut stages, &mut executor, &mut state, &mut mgr, 50).unwrap();

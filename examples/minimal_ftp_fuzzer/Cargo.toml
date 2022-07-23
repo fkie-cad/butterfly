@@ -12,3 +12,5 @@ debug = true
 libafl = "0.8"
 butterfly = { path = "../../", package = "butterfly-fuzz" }
 serde = "1.0"
+pcap = "0.9"
+etherparse = "0.11"
