@@ -33,7 +33,6 @@ use std::net::{TcpStream, SocketAddrV4, Ipv4Addr};
 use std::io::{Read, Write};
 use pcap::{Capture, Offline};
 use etherparse;
-use std::path::Path;
 
 fn parse_decimal(buf: &[u8]) -> (u32, usize) {
     let mut res = 0;
@@ -604,7 +603,7 @@ fn main() {
     let mut executor = FTPExecutor::new(tuple_list!(state_observer));
     
     // Load corpus
-    load_pcaps(&mut state, &mut fuzzer, &mut executor, &mut mgr, Path::new("pcaps")).unwrap();
+    load_pcaps(&mut state, &mut fuzzer, &mut executor, &mut mgr, "pcaps").unwrap();
     
     // Start the campaign
     fuzzer.fuzz_loop_for(&mut stages, &mut executor, &mut state, &mut mgr, 50).unwrap();

@@ -1,7 +1,7 @@
 use libafl::{Error, Evaluator};
 use pcap::{Capture, Offline};
 use std::ffi::OsStr;
-use std::path::Path;
+use std::path::PathBuf;
 
 /// Signifies that an input consists of packets.
 ///
@@ -80,13 +80,14 @@ pub trait HasPcapRepresentation<I> {
 /// - `fuzzer`: libafls fuzzer
 /// - `executor`: libafls executor
 /// - `mgr`: libafls event manager
-/// - `in_dir`: path to directory with .pcap files
-pub fn load_pcaps<S, Z, E, EM, I>(state: &mut S, fuzzer: &mut Z, executor: &mut E, mgr: &mut EM, in_dir: &Path) -> Result<(), Error>
+/// - `in_dir`: path to directory with pcap files
+pub fn load_pcaps<S, Z, E, EM, I, P>(state: &mut S, fuzzer: &mut Z, executor: &mut E, mgr: &mut EM, in_dir: P) -> Result<(), Error>
 where
     Z: Evaluator<E, EM, I, S>,
     I: HasPcapRepresentation<I>,
+    P: Into<PathBuf>,
 {
-    for entry in std::fs::read_dir(in_dir)? {
+    for entry in std::fs::read_dir(&in_dir.into())? {
         let entry = entry?;
         let path = entry.path();
 
@@ -105,7 +106,7 @@ where
                 let _ = fuzzer.evaluate_input(state, executor, mgr, input)?;
             }
         } else if attr.is_dir() {
-            load_pcaps(state, fuzzer, executor, mgr, &path)?;
+            load_pcaps(state, fuzzer, executor, mgr, path)?;
         }
     }
 

@@ -73,10 +73,7 @@ pub use observer::StateObserver;
 pub use scheduler::PacketMutationScheduler;
 
 #[cfg(feature = "graphviz")]
-pub use {
-    monitor::GraphvizMonitor,
-    event::USER_STAT_STATEGRAPH,
-};
+pub use {event::USER_STAT_STATEGRAPH, monitor::GraphvizMonitor};
 
 /// The tests below are just for checking that harnesses compile
 /// with the butterfly components. We don't actually want to execute
