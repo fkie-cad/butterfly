@@ -59,6 +59,8 @@ pub trait HasPackets<I> {
 }
 
 /// Signifies that an input can be constructed from a packet capture.
+///
+/// Use it in conjunction with [`load_pcaps`].
 pub trait HasPcapRepresentation<I> {
     /// Given a packet capture, parse the packets and construct an input
     fn from_pcap(capture: Capture<Offline>) -> Result<I, Error>;
