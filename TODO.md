@@ -1,7 +1,5 @@
 - [ ] token mutations
-- [ ] like toml monitor but for dot output of statemachine
 - [ ] more sophisticated mutation scheduling by tracking potency of packets
 - [ ] wiki pages
   - Monitoring and logging: Explaining DOT wrapper and state monitor and monitor trait
 - [ ] change pcap dependency to pure-rust pcap crate
-- [ ] convenience: use Into<Path> everywhere where Path is expected
