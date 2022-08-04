@@ -18,6 +18,7 @@ include = [
 libafl = "0.8"
 pcap = { version = "0.9", features = [] }
 serde = "1.0"
+ahash = "0.7"
 
 [features]
 default = []

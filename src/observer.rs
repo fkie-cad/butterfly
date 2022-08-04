@@ -1,8 +1,10 @@
 use libafl::{bolts::tuples::Named, executors::ExitKind, observers::Observer, Error};
 use serde::{Deserialize, Serialize};
-use std::cmp::Ord;
-use std::collections::{BTreeMap, BTreeSet};
+use std::cmp::Eq;
+use std::hash::Hash;
 use std::fmt::Debug;
+use std::collections::{HashMap, HashSet};
+use ahash::RandomState;
 
 #[inline]
 fn pack_transition(from: u32, to: u32) -> u64 {
@@ -18,21 +20,21 @@ fn unpack_transition(transition: u64) -> (u32, u32) {
 #[serde(bound = "PS: serde::Serialize + for<'a> serde::Deserialize<'a>")]
 struct StateGraph<PS>
 where
-    PS: Clone + Debug + Ord,
+    PS: Clone + Debug + Eq + Hash,
 {
-    nodes: BTreeMap<PS, u32>,
-    edges: BTreeSet<u64>,
+    nodes: HashMap<PS, u32, RandomState>,
+    edges: HashSet<u64, RandomState>,
     last_node: Option<u32>,
     new_transitions: bool,
 }
 impl<PS> StateGraph<PS>
 where
-    PS: Clone + Debug + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Clone + Debug + Eq + Hash + Serialize + for<'a> Deserialize<'a>,
 {
     fn new() -> Self {
         Self {
-            nodes: BTreeMap::<PS, u32>::new(),
-            edges: BTreeSet::<u64>::new(),
+            nodes: HashMap::<PS, u32, RandomState>::default(),
+            edges: HashSet::<u64, RandomState>::default(),
             last_node: None,
             new_transitions: false,
         }
@@ -84,7 +86,7 @@ where
 /// An observer that builds a state-graph.
 ///
 /// The states that this observer stores must implement
-/// the following traits: [`Ord`](core::cmp::Ord), [`Debug`](core::fmt::Debug), [`Clone`](core::clone::Clone), [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize).
+/// the following traits: [`Eq`](core::cmp::Eq), [`Hash`](std::hash::Hash), [`Debug`](core::fmt::Debug), [`Clone`](core::clone::Clone), [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize).
 /// Most commonly used state types are u64, u32 or [u8; N] with N <= 32.
 ///
 /// When you create a StateObserver always specify `PS` manually:
@@ -99,7 +101,7 @@ where
 #[serde(bound = "PS: serde::Serialize + for<'a> serde::Deserialize<'a>")]
 pub struct StateObserver<PS>
 where
-    PS: Clone + Debug + Ord,
+    PS: Clone + Debug + Eq + Hash,
 {
     name: String,
     graph: StateGraph<PS>,
@@ -107,7 +109,7 @@ where
 
 impl<PS> StateObserver<PS>
 where
-    PS: Clone + Debug + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Clone + Debug + Eq + Hash + Serialize + for<'a> Deserialize<'a>,
 {
     /// Create a new StateObserver with a given name.
     pub fn new(name: &str) -> Self {
@@ -143,7 +145,7 @@ where
 
 impl<PS> Named for StateObserver<PS>
 where
-    PS: Clone + Debug + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Clone + Debug + Hash + Eq + Serialize + for<'a> Deserialize<'a>,
 {
     fn name(&self) -> &str {
         &self.name
@@ -152,7 +154,7 @@ where
 
 impl<PS, I, S> Observer<I, S> for StateObserver<PS>
 where
-    PS: Clone + Debug + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Clone + Debug + Hash + Eq + Serialize + for<'a> Deserialize<'a>,
 {
     fn pre_exec(&mut self, _state: &mut S, _input: &I) -> Result<(), Error> {
         self.graph.reset();
@@ -202,7 +204,7 @@ mod benchmarks {
     #[ignore]
     fn memory_footprint(_: &mut Bencher) {
         let mut graph = StateGraph::<State>::new();
-        let limit: usize = 1024 * 24;
+        let limit: usize = 24576;
 
         for i in 0..limit {
             let i_node = graph.add_node(&state(i));

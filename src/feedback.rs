@@ -14,7 +14,8 @@ use libafl::{
     Error,
 };
 use serde::{Deserialize, Serialize};
-use std::cmp::Ord;
+use std::cmp::Eq;
+use std::hash::Hash;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
@@ -22,7 +23,7 @@ use std::marker::PhantomData;
 #[derive(Debug)]
 pub struct StateFeedback<PS>
 where
-    PS: Debug + Clone + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Debug + Clone + Eq + Hash + Serialize + for<'a> Deserialize<'a>,
 {
     observer_name: String,
     phantom: PhantomData<PS>,
@@ -30,7 +31,7 @@ where
 
 impl<PS> StateFeedback<PS>
 where
-    PS: Debug + Clone + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Debug + Clone + Eq + Hash + Serialize + for<'a> Deserialize<'a>,
 {
     /// Create a new StateFeedback from a StateObserver
     pub fn new(observer: &StateObserver<PS>) -> Self {
@@ -43,7 +44,7 @@ where
 
 impl<PS> Named for StateFeedback<PS>
 where
-    PS: Debug + Clone + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Debug + Clone + Eq + Hash + Serialize + for<'a> Deserialize<'a>,
 {
     fn name(&self) -> &str {
         "StateFeedback"
@@ -52,7 +53,7 @@ where
 
 impl<PS> HasObserverName for StateFeedback<PS>
 where
-    PS: Debug + Clone + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Debug + Clone + Eq + Hash + Serialize + for<'a> Deserialize<'a>,
 {
     fn observer_name(&self) -> &str {
         &self.observer_name
@@ -63,7 +64,7 @@ impl<I, S, PS> Feedback<I, S> for StateFeedback<PS>
 where
     I: Input,
     S: HasClientPerfMonitor,
-    PS: Debug + Clone + Ord + Serialize + for<'a> Deserialize<'a>,
+    PS: Debug + Clone + Eq + Hash + Serialize + for<'a> Deserialize<'a>,
 {
     fn is_interesting<EM, OT>(&mut self, state: &mut S, mgr: &mut EM, _input: &I, observers: &OT, _exit_kind: &ExitKind) -> Result<bool, Error>
     where
