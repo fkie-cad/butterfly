@@ -22,10 +22,15 @@ ahash = "0.7"
 
 [features]
 default = []
+
+# Only needed for building documentation on docs.rs
 docs-rs = ["pcap/docs-rs"]
 
+# Enables the GraphvizMonitor
+graphviz = []
+
 [package.metadata.docs.rs]
-features = ["docs-rs"]
+all-features = true
 
 [lib]
 doctest = false

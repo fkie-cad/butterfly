@@ -42,37 +42,3 @@ Start with [the wiki](https://github.com/fkie-cad/butterfly/wiki) and [the docs]
 Also, [some examples](./examples) may be helpful.
 
 For questions, feature requests or bug reports please [create an issue](https://github.com/fkie-cad/butterfly/issues/new).
-
-<!--
-WIKI
-====
-
-- A theoretical introduction
-    - note to skip to next part if not interested in theory
-    - a little bit from AFLNet paper / StateAFL paper
-- Components overview
-    - Input: HasPackets, HasPcapRepresentation, HasHavocMutations
-    - Mutators:
-        - (all mutators)
-        - Scheduler
-    - Observer:
-        - builds a StateGraph (example image FTP)
-        - `TargetState` type
-    - Feedback
-    - Monitor
-    - Executor
-        - responsible for recording state
-        - custom executor needed
-- How to create a fuzzer
-    - have compile-tests here
-    - create a new input type
-        - all traits...
-    - how to observe state in the executor (which type)
-        - create StateObserver
-        - create StateFeedback
-    - mutations
-    
-EXAMPLES
-========
-- AFLNet
--->

@@ -40,6 +40,10 @@
 //!   - if you want to use a different monitor but still want to get state-graph information you can
 //!     implement [`HasStateStats`]
 //!
+//! # Features
+//! - `graphviz`
+//!   - Adds [`GraphvizMonitor`] that writes a DOT representation of the state graph to a file
+//!
 //! # Tutorials, examples and more...
 //! ... can be found in our [repository](https://github.com/fkie-cad/butterfly) and [wiki](https://github.com/fkie-cad/butterfly/wiki).
 
@@ -67,6 +71,9 @@ pub use mutators::{
 };
 pub use observer::StateObserver;
 pub use scheduler::PacketMutationScheduler;
+
+#[cfg(feature = "graphviz")]
+pub use monitor::GraphvizMonitor;
 
 /// The tests below are just for checking that harnesses compile
 /// with the butterfly components. We don't actually want to execute

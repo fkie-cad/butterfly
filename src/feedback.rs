@@ -2,6 +2,10 @@ use crate::{
     event::{USER_STAT_EDGES, USER_STAT_NODES},
     observer::StateObserver,
 };
+
+#[cfg(feature = "graphviz")]
+use crate::event::USER_STAT_STATEGRAPH;
+
 use libafl::{
     bolts::tuples::Named,
     events::{Event, EventFirer},
@@ -15,8 +19,8 @@ use libafl::{
 };
 use serde::{Deserialize, Serialize};
 use std::cmp::Eq;
-use std::hash::Hash;
 use std::fmt::Debug;
+use std::hash::Hash;
 use std::marker::PhantomData;
 
 /// Determines that an input is interesting if it led to new states or transitions in the previous run.
@@ -94,6 +98,18 @@ where
                     phantom: PhantomData,
                 },
             )?;
+
+            #[cfg(feature = "graphviz")]
+            {
+                mgr.fire(
+                    state,
+                    Event::UpdateUserStats {
+                        name: USER_STAT_STATEGRAPH.to_string(),
+                        value: UserStats::String(state_observer.get_statemachine()),
+                        phantom: PhantomData,
+                    },
+                )?;
+            }
         }
 
         Ok(ret)

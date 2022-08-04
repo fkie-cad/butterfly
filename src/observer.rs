@@ -1,10 +1,10 @@
+use ahash::RandomState;
 use libafl::{bolts::tuples::Named, executors::ExitKind, observers::Observer, Error};
 use serde::{Deserialize, Serialize};
 use std::cmp::Eq;
-use std::hash::Hash;
-use std::fmt::Debug;
 use std::collections::{HashMap, HashSet};
-use ahash::RandomState;
+use std::fmt::{Debug, Write};
+use std::hash::Hash;
 
 #[inline]
 fn pack_transition(from: u32, to: u32) -> u64 {
@@ -71,15 +71,18 @@ where
         self.last_node = Some(id);
     }
 
-    fn print_dot(&self) {
-        println!("digraph IMPLEMENTED_STATE_MACHINE {{");
+    fn write_dot<S>(&self, stream: &mut S)
+    where
+        S: Write,
+    {
+        let _ = write!(stream, "digraph IMPLEMENTED_STATE_MACHINE {{");
 
         for value in &self.edges {
             let (from, to) = unpack_transition(*value);
-            println!("  \"{}\" -> \"{}\";", from, to);
+            let _ = write!(stream, "\"{}\"->\"{}\";", from, to);
         }
 
-        println!("}}");
+        let _ = write!(stream, "}}");
     }
 }
 
@@ -137,9 +140,11 @@ where
         (self.graph.nodes.len(), self.graph.edges.len())
     }
 
-    /// Print a dot representation of the statemachine to stdout.
-    pub fn print_statemachine(&self) {
-        self.graph.print_dot();
+    /// Returns a DOT representation of the statemachine.
+    pub fn get_statemachine(&self) -> String {
+        let mut s = String::with_capacity(1024);
+        self.graph.write_dot(&mut s);
+        s
     }
 }
 

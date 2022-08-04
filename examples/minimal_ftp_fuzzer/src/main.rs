@@ -24,7 +24,7 @@ use butterfly::{
     HasCrossoverReplaceMutation, PacketCrossoverReplaceMutator,
     HasSpliceMutation, PacketSpliceMutator,
     HasHavocMutation, PacketHavocMutator, supported_havoc_mutations,
-    HasPcapRepresentation, load_pcaps
+    HasPcapRepresentation, load_pcaps, GraphvizMonitor,
 };
 use serde::{Serialize, Deserialize};
 use std::marker::PhantomData;
@@ -569,7 +569,11 @@ where
 }
 
 fn main() {
-    let monitor = StateMonitor::new();
+    let monitor = GraphvizMonitor::new(
+        StateMonitor::new(),
+        "stategraph.dot",
+        0,
+    );
     let mut mgr = SimpleEventManager::new(monitor);
     let state_observer = StateObserver::<u32>::new("state");
     let mut feedback = StateFeedback::new(&state_observer);
@@ -605,6 +609,7 @@ fn main() {
     // Start the campaign
     fuzzer.fuzz_loop_for(&mut stages, &mut executor, &mut state, &mut mgr, 50).unwrap();
     
+    // Manually print the stategraph
     let state_observer: &StateObserver<u32> = executor.observers().match_name("state").unwrap();
-    state_observer.print_statemachine();
+    println!("{}", state_observer.get_statemachine());
 }

@@ -5,6 +5,9 @@ use libafl::{
 };
 use std::time::Duration;
 
+#[cfg(feature = "graphviz")]
+use {crate::event::USER_STAT_STATEGRAPH, std::fs::File, std::io::Write, std::path::PathBuf};
+
 /// Adds capabilities to a Monitor to get information about the state-graph.
 ///
 /// All functions are already provided.   
@@ -103,5 +106,91 @@ impl Monitor for StateMonitor {
             num_nodes,
             num_edges,
         );
+    }
+}
+
+/// A monitor that periodically outputs a DOT representation of the state graph.
+///
+/// If there are multiple fuzzer instances this monitor writes the state graph of
+/// each instance to the file separated by linebreaks.
+///
+/// # Example
+/// ```
+/// // Writes every 60 seconds into stategraph.dot
+/// let monitor = GraphvizMonitor::new(
+///    StateMonitor::new(),
+///    "stategraph.dot",
+///    60,
+/// );
+/// ```
+#[cfg(feature = "graphviz")]
+#[derive(Clone, Debug)]
+pub struct GraphvizMonitor<M>
+where
+    M: Monitor,
+{
+    base: M,
+    filename: PathBuf,
+    last_update: Duration,
+    interval: u64,
+}
+
+#[cfg(feature = "graphviz")]
+impl<M> GraphvizMonitor<M>
+where
+    M: Monitor,
+{
+    /// Creates a new GraphvizMonitor.
+    ///
+    /// # Arguments
+    /// - `monitor`: Other monitor that shall be wrapped
+    /// - `filename`: Filename of the dot file
+    /// - `interval`: Interval in seconds at which to write to the file
+    pub fn new<P>(monitor: M, filename: P, interval: u64) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        Self {
+            base: monitor,
+            filename: filename.into(),
+            last_update: current_time(),
+            interval,
+        }
+    }
+}
+
+#[cfg(feature = "graphviz")]
+impl<M> Monitor for GraphvizMonitor<M>
+where
+    M: Monitor,
+{
+    fn client_stats_mut(&mut self) -> &mut Vec<ClientStats> {
+        self.base.client_stats_mut()
+    }
+
+    fn client_stats(&self) -> &[ClientStats] {
+        self.base.client_stats()
+    }
+
+    fn start_time(&mut self) -> Duration {
+        self.base.start_time()
+    }
+
+    fn display(&mut self, event_msg: String, sender_id: u32) {
+        let cur_time = current_time();
+
+        if (cur_time - self.last_update).as_secs() >= self.interval {
+            self.last_update = cur_time;
+
+            let mut file = File::create(&self.filename).expect("Failed to open DOT file");
+
+            for stats in self.client_stats_mut() {
+                if let Some(UserStats::String(graph)) = stats.get_user_stats(USER_STAT_STATEGRAPH) {
+                    writeln!(&mut file, "{}", graph).expect("Failed to write DOT file");
+                }
+            }
+        }
+
+        self.base.display(event_msg, sender_id);
     }
 }

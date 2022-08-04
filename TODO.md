@@ -4,3 +4,5 @@
 - [ ] wiki pages
   - Monitoring and logging: Explaining DOT wrapper and state monitor and monitor trait
 - [ ] change pcap dependency to pure-rust pcap crate
+- [ ] convenience: use Into<Path> everywhere where Path is expected
+- [ ] pairwise references in documentation

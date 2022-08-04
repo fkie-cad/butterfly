@@ -10,7 +10,7 @@ debug = true
 
 [dependencies]
 libafl = "0.8"
-butterfly = { path = "../../", package = "butterfly-fuzz" }
+butterfly = { path = "../../", package = "butterfly-fuzz", features = ["graphviz"] }
 serde = "1.0"
 pcap = "0.9"
 etherparse = "0.11"
