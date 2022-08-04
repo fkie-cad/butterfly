@@ -85,7 +85,7 @@ where
 ///
 /// The states that this observer stores must implement
 /// the following traits: [`Ord`](core::cmp::Ord), [`Debug`](core::fmt::Debug), [`Clone`](core::clone::Clone), [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize).
-/// Most commonly used state types are u64 or [u8; N].
+/// Most commonly used state types are u64, u32 or [u8; N] with N <= 32.
 ///
 /// When you create a StateObserver always specify `PS` manually:
 /// ```
@@ -161,5 +161,63 @@ where
 
     fn post_exec(&mut self, _state: &mut S, _input: &I, _exit_kind: &ExitKind) -> Result<(), Error> {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod benchmarks {
+    extern crate test;
+    use super::*;
+    use test::Bencher;
+
+    type State = [u8; 32];
+
+    fn state(n: usize) -> State {
+        let mut state = State::default();
+        state[0..8].copy_from_slice(&n.to_le_bytes());
+        state
+    }
+
+    #[bench]
+    fn bench_duplicates(b: &mut Bencher) {
+        let mut graph = StateGraph::<State>::new();
+        b.iter(|| {
+            let node = graph.add_node(&State::default());
+            graph.add_edge(node);
+        });
+    }
+
+    #[bench]
+    fn bench_insertions(b: &mut Bencher) {
+        let mut graph = StateGraph::<State>::new();
+        let mut i: usize = 0;
+        b.iter(|| {
+            let node = graph.add_node(&state(i));
+            graph.add_edge(node);
+            i += 1;
+        });
+    }
+
+    #[bench]
+    #[ignore]
+    fn memory_footprint(_: &mut Bencher) {
+        let mut graph = StateGraph::<State>::new();
+        let limit: usize = 1024 * 24;
+
+        for i in 0..limit {
+            let i_node = graph.add_node(&state(i));
+
+            for j in 0..limit {
+                let j_node = graph.add_node(&state(j));
+                graph.add_edge(i_node);
+                graph.add_edge(j_node);
+                graph.reset();
+            }
+        }
+
+        println!("nodes = {}", graph.nodes.len());
+        println!("edges = {}", graph.edges.len());
+
+        loop {}
     }
 }

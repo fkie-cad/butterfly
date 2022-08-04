@@ -46,6 +46,7 @@
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
 #![allow(clippy::new_without_default)]
+#![feature(test)]
 
 mod event;
 mod feedback;
