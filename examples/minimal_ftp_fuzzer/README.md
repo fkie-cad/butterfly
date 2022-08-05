@@ -6,6 +6,7 @@ It is based on the following tutorials:
 - [First steps: Creating a minimal FTP fuzzer](https://github.com/fkie-cad/butterfly/wiki/First-steps:-Creating-a-minimal-FTP-fuzzer)
 - [Enabling more complex mutations](https://github.com/fkie-cad/butterfly/wiki/Enabling-more-complex-mutations)
 - [Loading inputs from pcap files](https://github.com/fkie-cad/butterfly/wiki/Loading-inputs-from-pcap-files)
+- [Monitoring and Logging](https://github.com/fkie-cad/butterfly/wiki/Monitoring-and-Logging)
 
 ## Building
 ```
