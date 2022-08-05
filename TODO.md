@@ -1,5 +1,3 @@
 - [ ] token mutations
 - [ ] more sophisticated mutation scheduling by tracking potency of packets
-- [ ] wiki pages
-  - Monitoring and logging: Explaining DOT wrapper and state monitor and monitor trait
 - [ ] change pcap dependency to pure-rust pcap crate
