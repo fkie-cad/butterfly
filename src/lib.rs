@@ -51,7 +51,7 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 #![allow(clippy::new_without_default)]
 #![feature(test)]
-#![forbid(unsafe_code)]
+#![cfg_attr(feature = "safe_only", forbid(unsafe_code))]
 
 mod event;
 mod feedback;

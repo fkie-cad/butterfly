@@ -29,6 +29,10 @@ docs-rs = ["pcap/docs-rs"]
 # Enables the GraphvizMonitor
 graphviz = []
 
+# Replace performance-optimized unsafe operations
+# with slightly slower but safe operations
+safe_only = []
+
 [package.metadata.docs.rs]
 all-features = true
 
