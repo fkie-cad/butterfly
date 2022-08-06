@@ -34,7 +34,7 @@ rustup toolchain install nightly
 and in your `Cargo.toml` insert
 ```toml
 [dependencies]
-butterfly = { version = "0.2.1", package = "butterfly-fuzz" }
+butterfly = { version = "0.2.2", package = "butterfly-fuzz" }
 ```
 
 ## How to use
