@@ -273,8 +273,17 @@ where
             return Ok(MutationResult::Skipped);
         }
 
-        let other = input.packets()[other].clone();
-        input.packets_mut()[packet].mutate_crossover_replace(state, &other, stage_idx)
+        #[cfg(feature = "safe_only")]
+        {
+            let other = input.packets()[other].clone();
+            input.packets_mut()[packet].mutate_crossover_replace(state, &other, stage_idx)
+        }
+        #[cfg(not(feature = "safe_only"))]
+        {
+            let dst = std::ptr::addr_of_mut!(input.packets_mut()[packet]);
+            let src = std::ptr::addr_of!(input.packets()[other]);
+            unsafe { dst.as_mut().unwrap().mutate_crossover_replace(state, src.as_ref().unwrap(), stage_idx) }
+        }
     }
 }
 
@@ -466,5 +475,42 @@ mod tests {
             input.packets[1].bytes_mut().resize(4096, 1);
             while mutator.mutate(&mut state, &mut input, 0).unwrap() == MutationResult::Skipped {}
         });
+    }
+
+    #[test]
+    fn test_mutator_replace() {
+        let mut state = TestState::new();
+        let mut mutator = PacketCrossoverReplaceMutator::<BytesInput, TestState>::new();
+        let mut input = TestInput {
+            packets: vec![BytesInput::new(vec![0; 4096]), BytesInput::new(vec![1; 4096])],
+        };
+
+        while mutator.mutate(&mut state, &mut input, 0).unwrap() == MutationResult::Skipped {}
+
+        let mut modified = false;
+
+        for b in input.packets[0].bytes() {
+            if *b == 1 {
+                modified = true;
+            }
+        }
+        for b in input.packets[1].bytes() {
+            if *b == 0 {
+                modified = true;
+            }
+        }
+
+        assert!(modified);
+    }
+
+    #[bench]
+    fn bench_mutator_replace(b: &mut Bencher) {
+        let mut state = TestState::new();
+        let mut mutator = PacketCrossoverReplaceMutator::<BytesInput, TestState>::new();
+        let mut input = TestInput {
+            packets: vec![BytesInput::new(vec![0; 4096]), BytesInput::new(vec![1; 4096])],
+        };
+
+        b.iter(|| while mutator.mutate(&mut state, &mut input, 0).unwrap() == MutationResult::Skipped {});
     }
 }
