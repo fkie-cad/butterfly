@@ -111,6 +111,8 @@ impl Monitor for StateMonitor {
 
 /// A monitor that periodically outputs a DOT representation of the state graph.
 ///
+/// __Only available with feature__: `graphviz`
+///
 /// If there are multiple fuzzer instances this monitor writes the state graph of
 /// each instance to the file separated by linebreaks.
 ///

@@ -43,6 +43,9 @@
 //! # Features
 //! - `graphviz`
 //!   - Adds [`GraphvizMonitor`] that writes a DOT representation of the state graph to a file
+//! - `safe_only`
+//!   - By default butterfly uses some unsafe code for performance reasons
+//!     but this can be disabled with this feature
 //!
 //! # Tutorials, examples and more...
 //! ... can be found in our [repository](https://github.com/fkie-cad/butterfly) and [wiki](https://github.com/fkie-cad/butterfly/wiki).
